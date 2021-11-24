@@ -6,3 +6,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+wedpr_l_crypto_zkp_utils = "1.2"
+curve25519-dalek = "1"
+polynomials = "0.2.4"
