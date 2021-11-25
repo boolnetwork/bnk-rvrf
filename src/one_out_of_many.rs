@@ -196,6 +196,7 @@ mod tests {
         let x = get_random_scalar();
         let r = get_random_scalar();
         let ci_vec = generate_sks(10);
+
         let mut cdk_vec = Vec::new();
         let mut ci_vec_comm = Vec::new();
         for j in 0..binary_j_vec_len as usize {
@@ -212,23 +213,55 @@ mod tests {
             }
         }
 
+        let mut cdk_add_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let mut cdk_i = cdk_vec[9*j];
+            for i in 1..number_of_public_keys as usize{
+                cdk_i += cdk_vec[9*j+i];
+            }
+            cdk_add_vec.push(cdk_i);
+        }
+
         let mut ci_pow_fji =
             ci_vec_comm[0].comm.point.clone() * f_i_j_poly.index(0).eval(x).unwrap();
         for i in 1..number_of_public_keys as usize {
             ci_pow_fji += ci_vec_comm[i].comm.point.clone() * f_i_j_poly.index(i).eval(x).unwrap();
         }
 
-        let mut cd_k_xk = cdk_vec[0] * Scalar::one();
-        for i in 1..number_of_public_keys as usize {
+        println!("cdk_vec len = {:?}",cdk_vec.len());
+        let mut cd_k_xk = cdk_add_vec[0] * Scalar::one();
+        for j in 1..binary_j_vec_len as usize {
             let mut x = Scalar::one();
-            for k in 0..i {
+            for k in 0..j {
                 x *= x;
             }
-            cd_k_xk += cdk_vec[i] * -x;
+            cd_k_xk += cdk_add_vec[j] * -x; //TODO::cdk
         }
 
         let left = ci_pow_fji + cd_k_xk;
         println!("left = {:?}",left);
 
+        let mut x_pow_n = Scalar::one();
+        for k in 0..binary_j_vec_len as usize {
+            x_pow_n *= x_pow_n;
+        }
+
+        let mut rou_k_x_pow_k = rouk_vec[0] * Scalar::one();
+        for j in 0..binary_j_vec_len as usize {
+            let mut x = Scalar::one();
+            for k in 0..j {
+                x *= x;
+            }
+            rou_k_x_pow_k += rouk_vec[j] * x;
+        }
+        let zd = x_pow_n * r - rou_k_x_pow_k;
+        let right = Com::commit_scalar_2(Scalar::zero(), zd);
+        println!("right = {:?}",right.comm.point);
+
+        if left == right.comm.point{
+            println!("ok");
+        }else {
+            println!("bad");
+        }
     }
 }
