@@ -95,9 +95,9 @@ pub fn generate_sks(amount: u64) -> Vec<Scalar> {
 
 pub fn kronecker_delta(a: u64, b: u64) -> Scalar {
     if a == b {
-        Scalar::from(1u64)
+        Scalar::one()
     } else {
-        Scalar::from(0u64)
+        Scalar::zero()
     }
 }
 
@@ -166,6 +166,7 @@ mod tests {
             let cbj = Com::commit_scalar_2(Scalar::from(l_vec[j as usize]) * aj, tj);
         }
 
+        let mut f_i_j_poly: Vec<Polynomial<Scalar>> = Vec::new();
         let mut p_i_k: Vec<Vec<Scalar>> = Vec::new();
         // for each i : 得到除了x^n以外所有x^0..x^n-1的系数 ai,k k=0..n-1
         for i in 0..number_of_public_keys {
@@ -177,18 +178,13 @@ mod tests {
             let mut f_j_ij_mul = poly![Scalar::from(1u64)];
             for j in 0..n {
                 let f_j_ij = if i_vec[j] == 0 {
-                    poly![
-                        kronecker_delta(0, l_vec[j]),
-                        -aj_vec[j]
-                    ]   // (δ0,lj)*x-aj
+                    poly![kronecker_delta(0, l_vec[j]), -aj_vec[j]] // (δ0,lj)*x-aj
                 } else {
-                    poly![
-                        kronecker_delta(1, l_vec[j]),
-                        aj_vec[j]
-                    ]   // (δ1,lj)*x+aj
+                    poly![kronecker_delta(1, l_vec[j]), aj_vec[j]] // (δ1,lj)*x+aj
                 };
                 f_j_ij_mul *= f_j_ij;
             }
+            f_i_j_poly.push(f_j_ij_mul.clone());
             let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
             println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             coefficients.reverse();
@@ -198,10 +194,41 @@ mod tests {
         println!("test coefficients(X^n+...+x^0) = {:?}", test);
 
         let x = get_random_scalar();
+        let r = get_random_scalar();
+        let ci_vec = generate_sks(10);
+        let mut cdk_vec = Vec::new();
+        let mut ci_vec_comm = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
+            let zaj = rj_vec[j] * x + sj_vec[j];
+            let zbj = rj_vec[j] * (x - fj) + tj_vec[j];
+            let com_rouk = Com::commit_scalar_2(Scalar::from(0u64), rouk_vec[j]);
+            for i in 0..number_of_public_keys as usize {
+                let ci = Com::commit_scalar_2(ci_vec[i], r);
+                ci_vec_comm.push(ci.clone());
+                let cdk =
+                    ci.comm.point.clone() * p_i_k.index(i).index(j) + com_rouk.comm.point.clone();
+                cdk_vec.push(cdk);
+            }
+        }
 
+        let mut ci_pow_fji =
+            ci_vec_comm[0].comm.point.clone() * f_i_j_poly.index(0).eval(x).unwrap();
+        for i in 1..number_of_public_keys as usize {
+            ci_pow_fji += ci_vec_comm[i].comm.point.clone() * f_i_j_poly.index(i).eval(x).unwrap();
+        }
 
+        let mut cd_k_xk = cdk_vec[0] * Scalar::one();
+        for i in 1..number_of_public_keys as usize {
+            let mut x = Scalar::one();
+            for k in 0..i {
+                x *= x;
+            }
+            cd_k_xk += cdk_vec[i] * -x;
+        }
 
-
+        let left = ci_pow_fji + cd_k_xk;
+        println!("left = {:?}",left);
 
     }
 }
