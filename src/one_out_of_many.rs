@@ -128,11 +128,37 @@ mod tests {
 
         let c = a * b;
 
-        // (x + 1)(x - 1) = x^2 - 1
+        // (x + 1)(x - 1)(1)(1)(1) = x^2 - 1
         let a = poly![1, 1]; // x + 1
         let b = poly![1, -1]; // x - 1
         let c = poly![1];
         assert_eq!(a * b * c.clone() * c.clone() * c, poly![1, 0, -1]);
+    }
+
+    #[test]
+    fn poly_2_test() {
+        use polynomials::*;
+
+        let x = 5u64;
+        let a = poly![6, 10]; // 6x+10  10x+6
+        let b = poly![3, 9]; // 3x+9  9x+3
+        let c = a * b;
+        let result_eval = c.eval(x).unwrap();
+        println!("coeff={:?}",c); // 18x^2+84x+90  90x^2+84x+18 //[18, 84, 90]
+        let mut coeff:Vec<u64> = c.into();
+        //coeff.reverse();
+        let len = coeff.len();
+        let mut result_coeff = coeff[0] * 1u64;
+        println!("result_coeff={:?}",result_coeff);
+        for i in 1..len{
+            let mut tmp_x = 1u64;
+            for bb in 0..i{
+                tmp_x *= x;
+            }
+            result_coeff += coeff[i] * tmp_x;
+            println!("result_coeff={:?}",result_coeff);
+        }
+        assert_eq!(result_eval,result_coeff);
     }
 
     #[test]
@@ -187,20 +213,24 @@ mod tests {
             let mut f_j_ij_mul = poly![Scalar::from(1u64)];
             for j in 0..n {
                 let f_j_ij = if i_vec[j] == 0 {
-                    poly![kronecker_delta(0, l_vec[j]), -aj_vec[j]] // (δ0,lj)*x-aj
+                    //poly![kronecker_delta(0, l_vec[j]), -aj_vec[j]]
+                    poly![-aj_vec[j],kronecker_delta(0, l_vec[j])] // (δ0,lj)*x-aj
                 } else {
-                    poly![kronecker_delta(1, l_vec[j]), aj_vec[j]] // (δ1,lj)*x+aj
+                    //poly![kronecker_delta(1, l_vec[j]), aj_vec[j]]
+                    poly![aj_vec[j],kronecker_delta(1, l_vec[j])] // (δ1,lj)*x+aj
                 };
                 f_j_ij_mul *= f_j_ij;
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
             let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
-            coefficients.reverse();
+            //coefficients.reverse();
             println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             p_i_k.push(coefficients);
         }
         let test = p_i_k.index(4).index(1);
         println!("test coefficients(X^n+...+x^0) = {:?}", test);
+
+
 
         let x = get_random_scalar();
         let r = get_random_scalar();
@@ -241,6 +271,41 @@ mod tests {
         for i in 1..number_of_public_keys as usize {
             ci_pow_fji += ci_vec_comm[i].comm.point.clone() * f_i_j_poly.index(i).eval(x).unwrap();
         }
+        println!("ci_pow_fji = {:?}",ci_pow_fji);
+
+        // 系数 x 测试
+        let mut bbb = p_i_k.index(4).index(0) * Scalar::one();
+        for j in 1..(binary_j_vec_len+1) as usize {
+            let mut x_tmp = Scalar::one();
+            for k in 0..j{
+                x_tmp *= x;
+            }
+            bbb += p_i_k.index(4).index(j) * x_tmp;
+        }
+        let ccc = f_i_j_poly.index(4).eval(x).unwrap();
+        println!("bbbccc = {:?}", bbb);
+        println!("bbbccc = {:?}", ccc);
+        //
+        // 计算中间过程来验证：
+        let mut xxxx = RistrettoPoint::default();
+        for i in 0..number_of_public_keys as usize {
+            for j in 0..binary_j_vec_len as usize {
+                let mut x_tmp = Scalar::one();
+                for k in 0..j {
+                    x_tmp *= x;
+                }
+                xxxx += ci_vec_comm[i].comm.point.clone()*p_i_k.index(i).index(j) * x_tmp;
+            }
+        }
+        let mut x_tmp = Scalar::one();
+        for k in 0..binary_j_vec_len+1 {
+            x_tmp *= x;
+        }
+        xxxx += ci_vec_comm[5].comm.point.clone() * x_tmp;
+        xxxx -= RistrettoPoint::default();
+        println!("xxxx = {:?}",xxxx);
+        //
+
 
         println!("cdk_vec len = {:?}",cdk_vec.len());
         let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
