@@ -127,6 +127,12 @@ mod tests {
         let b = poly![get_random_scalar(), get_random_scalar()];
 
         let c = a * b;
+
+        // (x + 1)(x - 1) = x^2 - 1
+        let a = poly![1, 1]; // x + 1
+        let b = poly![1, -1]; // x - 1
+        let c = poly![1];
+        assert_eq!(a * b * c.clone() * c.clone() * c, poly![1, 0, -1]);
     }
 
     #[test]
@@ -135,9 +141,12 @@ mod tests {
         let binary_j_vec = number_to_binary(number_of_public_keys);
         let binary_j_vec_len = binary_j_vec.len() as u64;
 
-        // 假设 一共10commit（0..9） 其中 第l（5）个是0
+        // 假设 一共10commit（0..9） 其中 index为l（5）个是0
         let l_vec = fix_len_binary(5, number_of_public_keys);
         println!("l_vec = {:?}", l_vec);
+        let mut ci_vec = generate_sks(10);
+        // index =  0 1 2 3 4 5 6 7 8 9
+        ci_vec[5] = Scalar::zero();
 
         let mut rj_vec: Vec<Scalar> = Vec::new();
         let mut aj_vec: Vec<Scalar> = Vec::new();
@@ -186,8 +195,8 @@ mod tests {
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
             let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
-            println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             coefficients.reverse();
+            println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             p_i_k.push(coefficients);
         }
         let test = p_i_k.index(4).index(1);
@@ -195,29 +204,34 @@ mod tests {
 
         let x = get_random_scalar();
         let r = get_random_scalar();
-        let ci_vec = generate_sks(10);
+
+        let mut ci_vec_comm = Vec::new();
+        for i in 0..number_of_public_keys as usize {
+            let ci = Com::commit_scalar_2(ci_vec[i], r);
+            ci_vec_comm.push(ci.clone());
+        }
 
         let mut cdk_vec = Vec::new();
-        let mut ci_vec_comm = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
             let zaj = rj_vec[j] * x + sj_vec[j];
             let zbj = rj_vec[j] * (x - fj) + tj_vec[j];
-            let com_rouk = Com::commit_scalar_2(Scalar::from(0u64), rouk_vec[j]);
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
             for i in 0..number_of_public_keys as usize {
-                let ci = Com::commit_scalar_2(ci_vec[i], r);
-                ci_vec_comm.push(ci.clone());
                 let cdk =
-                    ci.comm.point.clone() * p_i_k.index(i).index(j) + com_rouk.comm.point.clone();
+                    ci_vec_comm[i].comm.point.clone() * p_i_k.index(i).index(j);//+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
             }
         }
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let mut cdk_i = cdk_vec[9*j];
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+            let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
+            println!("10j = {}",10*j);
             for i in 1..number_of_public_keys as usize{
-                cdk_i += cdk_vec[9*j+i];
+                cdk_i += cdk_vec[10*j+i];
+                println!("aaaa = {}",10*j+i);
             }
             cdk_add_vec.push(cdk_i);
         }
@@ -229,13 +243,13 @@ mod tests {
         }
 
         println!("cdk_vec len = {:?}",cdk_vec.len());
-        let mut cd_k_xk = cdk_add_vec[0] * Scalar::one();
+        let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
         for j in 1..binary_j_vec_len as usize {
-            let mut x = Scalar::one();
+            let mut x_tmp = Scalar::one();
             for k in 0..j {
-                x *= x;
+                x_tmp *= x;
             }
-            cd_k_xk += cdk_add_vec[j] * -x; //TODO::cdk
+            cd_k_xk += cdk_add_vec[j] * (-x_tmp);
         }
 
         let left = ci_pow_fji + cd_k_xk;
@@ -243,16 +257,17 @@ mod tests {
 
         let mut x_pow_n = Scalar::one();
         for k in 0..binary_j_vec_len as usize {
-            x_pow_n *= x_pow_n;
+            x_pow_n *= x;
         }
 
         let mut rou_k_x_pow_k = rouk_vec[0] * Scalar::one();
-        for j in 0..binary_j_vec_len as usize {
-            let mut x = Scalar::one();
+        for j in 1..binary_j_vec_len as usize {
+            let mut x_tmp = Scalar::one();
             for k in 0..j {
-                x *= x;
+                println!("k = {:?}",k);
+                x_tmp *= x;
             }
-            rou_k_x_pow_k += rouk_vec[j] * x;
+            rou_k_x_pow_k += rouk_vec[j] * x_tmp;
         }
         let zd = x_pow_n * r - rou_k_x_pow_k;
         let right = Com::commit_scalar_2(Scalar::zero(), zd);
@@ -263,5 +278,6 @@ mod tests {
         }else {
             println!("bad");
         }
+        assert_eq!(left,right.comm.point);
     }
 }
