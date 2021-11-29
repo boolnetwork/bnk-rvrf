@@ -72,6 +72,14 @@ impl Com {
     }
 }
 
+pub fn generate_sks(amount: u64) -> Vec<Scalar> {
+    let sks_vec: Vec<Scalar> = (0..amount)
+        .into_iter()
+        .map(|_| get_random_scalar())
+        .collect();
+    sks_vec
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

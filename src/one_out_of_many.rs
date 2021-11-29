@@ -5,7 +5,7 @@ use wedpr_l_crypto_zkp_utils::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use crate::util::{Com, Secret, Commitment};
+use crate::util::{Com, Secret, Commitment, generate_sks};
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
 
@@ -22,7 +22,7 @@ pub struct Statement {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Witness {
     pub r: Scalar,
-    pub l: u64,
+    pub l: Scalar,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -36,14 +36,6 @@ pub struct Prover {
 pub struct Verifier {
     pub statement: Statement,
     pub crs: CRS,
-}
-
-pub fn generate_sks(amount: u64) -> Vec<Scalar> {
-    let sks_vec: Vec<Scalar> = (0..amount)
-        .into_iter()
-        .map(|_| get_random_scalar())
-        .collect();
-    sks_vec
 }
 
 pub fn kronecker_delta(a: u64, b: u64) -> Scalar {

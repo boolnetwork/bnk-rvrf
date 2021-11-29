@@ -9,7 +9,6 @@ use crate::util::{Com, Secret, Commitment};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
-    pub ck: Scalar,
     pub c: RistrettoPoint,
 }
 
@@ -37,7 +36,6 @@ pub struct Verifier {
 impl CRS{
     pub fn new(m:Scalar,r:Scalar) -> Self{
         Self{
-            ck: get_random_scalar(),
             c: Com::commit_scalar_2(m,r).comm.point,
         }
     }
