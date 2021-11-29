@@ -80,6 +80,14 @@ pub fn generate_sks(amount: u64) -> Vec<Scalar> {
     sks_vec
 }
 
+pub fn kronecker_delta(a: u64, b: u64) -> Scalar {
+    if a == b {
+        Scalar::one()
+    } else {
+        Scalar::zero()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

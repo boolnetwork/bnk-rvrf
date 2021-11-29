@@ -5,7 +5,7 @@ use wedpr_l_crypto_zkp_utils::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use crate::util::{Com, Secret, Commitment, generate_sks};
+use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta};
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
 
@@ -36,14 +36,6 @@ pub struct Prover {
 pub struct Verifier {
     pub statement: Statement,
     pub crs: CRS,
-}
-
-pub fn kronecker_delta(a: u64, b: u64) -> Scalar {
-    if a == b {
-        Scalar::one()
-    } else {
-        Scalar::zero()
-    }
 }
 
 #[cfg(test)]
