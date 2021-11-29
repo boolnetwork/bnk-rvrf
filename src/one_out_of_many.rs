@@ -5,7 +5,7 @@ use wedpr_l_crypto_zkp_utils::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-
+use crate::util::{Com, Secret, Commitment};
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
 
@@ -36,53 +36,6 @@ pub struct Prover {
 pub struct Verifier {
     pub statement: Statement,
     pub crs: CRS,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct Com {
-    pub comm: Commitment,
-    pub secret: Secret,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct Commitment {
-    pub point: RistrettoPoint,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct Secret {
-    value: Scalar,
-    secret: Scalar,
-}
-
-impl Com {
-    pub fn commit_scalar(value: Scalar) -> Self {
-        let secret = get_random_scalar();
-        let commitment_point =
-            RistrettoPoint::multiscalar_mul([value, secret], &[*BASEPOINT_G1, *BASEPOINT_G2]);
-
-        Self {
-            comm: Commitment {
-                point: commitment_point,
-            },
-            secret: Secret { value, secret },
-        }
-    }
-
-    pub fn commit_scalar_2(value: Scalar, value2: Scalar) -> Self {
-        let commitment_point =
-            RistrettoPoint::multiscalar_mul([value, value2], &[*BASEPOINT_G1, *BASEPOINT_G2]);
-
-        Self {
-            comm: Commitment {
-                point: commitment_point,
-            },
-            secret: Secret {
-                value,
-                secret: value2,
-            },
-        }
-    }
 }
 
 pub fn generate_sks(amount: u64) -> Vec<Scalar> {

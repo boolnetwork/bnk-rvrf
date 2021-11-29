@@ -1,3 +1,9 @@
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
+use wedpr_l_crypto_zkp_utils::{
+    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
+    BASEPOINT_G1, BASEPOINT_G2,
+};
+
 pub fn number_to_binary(num: u64) -> Vec<u64> {
     let binary: Vec<u64> = format!("{:b}", num)
         .chars()
@@ -17,6 +23,53 @@ pub fn fix_len_binary(num: u64, max: u64) -> Vec<u64> {
     let mut new = vec![0u64; max_len - raw_len];
     new.append(&mut raw);
     return new;
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Com {
+    pub comm: Commitment,
+    pub secret: Secret,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Commitment {
+    pub point: RistrettoPoint,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Secret {
+    value: Scalar,
+    secret: Scalar,
+}
+
+impl Com {
+    pub fn commit_scalar(value: Scalar) -> Self {
+        let secret = get_random_scalar();
+        let commitment_point =
+            RistrettoPoint::multiscalar_mul([value, secret], &[*BASEPOINT_G1, *BASEPOINT_G2]);
+
+        Self {
+            comm: Commitment {
+                point: commitment_point,
+            },
+            secret: Secret { value, secret },
+        }
+    }
+
+    pub fn commit_scalar_2(value: Scalar, value2: Scalar) -> Self {
+        let commitment_point =
+            RistrettoPoint::multiscalar_mul([value, value2], &[*BASEPOINT_G1, *BASEPOINT_G2]);
+
+        Self {
+            comm: Commitment {
+                point: commitment_point,
+            },
+            secret: Secret {
+                value,
+                secret: value2,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
