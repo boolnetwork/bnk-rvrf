@@ -2,6 +2,7 @@ mod one_out_of_many;
 mod util;
 mod zero_or_one;
 mod prf;
+mod vrf;
 
 #[cfg(test)]
 mod tests {

@@ -6,12 +6,13 @@ use wedpr_l_crypto_zkp_utils::{
     BASEPOINT_G1, BASEPOINT_G2,
 };
 use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta};
+use crate::zero_or_one::{Prover as ZOProver, CRS as ZOCRS, Proof as ZOProof, Verifier as ZOVerifier};
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
-    pub ck: Scalar,
+    pub c: RistrettoPoint,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -21,7 +22,7 @@ pub struct Statement {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Witness {
-    pub r: Scalar,
+    pub sk: Scalar,
     pub l: Scalar,
 }
 
@@ -38,6 +39,87 @@ pub struct Verifier {
     pub crs: CRS,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Proof {
+    pub clj: Vec<RistrettoPoint>,
+    // pub caj: Vec<RistrettoPoint>,
+    // pub cbj: Vec<RistrettoPoint>,
+    pub cdk: Vec<RistrettoPoint>,
+    // pub fj: Vec<Scalar>,
+    // pub zaj: Vec<Scalar>,
+    // pub zbj: Vec<Scalar>,
+    pub zd: Vec<Scalar>,
+    pub zoproof: Vec<ZOProof> // 上面5个本质是这一个东西
+}
+
+impl CRS{
+    pub fn new(m:Scalar,r:Scalar) -> Self {
+        Self{
+            c: Com::commit_scalar_2(m,r).comm.point,
+        }
+    }
+}
+
+impl Statement{
+    pub fn new(amount:u64, l:u64, r:Scalar) -> Self{
+        if amount < l {
+            return Self::default();
+        }
+
+        let sks= generate_sks(amount);
+
+        let mut pk_vec: Vec<RistrettoPoint> = sks
+            .into_iter()
+            .map(|sk| Com::commit_scalar_2(sk,r).comm.point )
+            .collect();
+
+        pk_vec[l] = Com::commit_scalar_2(Scalar::zero(),r).comm.point;
+
+        Self{
+            pk_vec,
+        }
+    }
+}
+
+
+impl Witness {
+    pub fn new(l: u64) -> Self {
+        Self{
+            sk: Scalar::zero(),
+            l: Scalar::from(l),
+        }
+    }
+}
+
+
+impl Prover{
+    pub fn new(witness:Witness,statement:Statement,crs:CRS) -> Self{
+        Self{
+            witness,
+            statement,
+            crs
+        }
+    }
+
+    pub fn new_2(){
+
+    }
+
+    pub fn prove(self) -> Proof{
+        let CRS{ c } = self.crs.clone();
+        let Statement{pk_vec } = self.statement.clone();
+        let Witness{ sk, l } = self.witness.clone();
+        
+
+        Proof{
+            clj: vec![],
+            cdk: vec![],
+            zd: vec![],
+            zoproof: vec![]
+        }
+    }
+
+}
 #[cfg(test)]
 mod tests {
     use super::*;
