@@ -96,6 +96,15 @@ pub fn hash_x(bytes_to_hash:Vec<Vec<u8>>) -> Scalar{
     hash_to_scalar(&hash_vec)
 }
 
+// return x^n
+pub fn x_pow_n(x:Scalar,n:u64) -> Scalar{
+    let mut x_tmp = Scalar::one();
+    for k in 0..n {
+        x_tmp *= x;
+    }
+    x_tmp
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
