@@ -45,6 +45,8 @@ pub struct Verifier {
 #[derive(Clone, Debug, Default)]
 pub struct Proof {
     pub clj: Vec<RistrettoPoint>,
+    pub fj: Vec<Scalar>,
+    pub rouk: Vec<Scalar>,
     // pub caj: Vec<RistrettoPoint>,
     // pub cbj: Vec<RistrettoPoint>,
     pub cdk: Vec<RistrettoPoint>,
@@ -214,8 +216,15 @@ impl Prover{
         }
         let zd = x_pow_n * r - rou_k_x_pow_k;
 
+        let mut  fj_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
+            fj_vec.push(fj);
+        }
         Proof{
             clj: vec![],
+            fj: fj_vec,
+            rouk: rouk_vec,
             cdk: cdk_add_vec,
             zd: zd,
             zoproof: vec![]
@@ -223,6 +232,79 @@ impl Prover{
     }
 
 }
+
+impl Verifier {
+    pub fn new(statement:Statement,crs:CRS) -> Self{
+        Self{
+            statement,
+            crs
+        }
+    }
+    pub fn verify(self,proof:Proof) -> bool{
+        let CRS{ c } = self.crs.clone();
+        let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
+        let Proof{clj,fj:fj_vec,rouk:rouk_vec
+            ,cdk:cdk_vec,zd,zoproof} = proof;
+
+        //TODO::
+        let mut hash_vec = Vec::new();
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
+        let x = hash_to_scalar(&hash_vec);
+
+        let number_of_public_keys = ci_vec_comm.len() as u64;
+        let binary_j_vec = number_to_binary(number_of_public_keys);
+        let binary_j_vec_len = binary_j_vec.len() as u64;
+
+        let mut ci_pow_fji_2 = RistrettoPoint::default();
+        for i in 0..number_of_public_keys {
+            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let n = i_vec.len();
+            let mut each_f_j_ij = Scalar::one();
+            for j in 0..n {
+                let f_j_ij = if i_vec[j] == 0 {
+                    x - fj_vec[j]
+                }else {
+                    fj_vec[j]
+                };
+                each_f_j_ij *= f_j_ij;
+            }
+            ci_pow_fji_2 += ci_vec_comm[i as usize] * each_f_j_ij;
+        }
+
+        ci_pow_fji_2 -= RistrettoPoint::default();
+
+        let mut cdk_add_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+            let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
+            for i in 1..number_of_public_keys as usize{
+                cdk_i += cdk_vec[10*j+i];
+            }
+            cdk_add_vec.push(cdk_i);
+        }
+        println!("cdk_vec len = {:?}",cdk_vec.len());
+        let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
+        for j in 1..binary_j_vec_len as usize {
+            let mut x_tmp = Scalar::one();
+            for k in 0..j {
+                x_tmp *= x;
+            }
+            cd_k_xk += cdk_add_vec[j] * (-x_tmp);
+        }
+
+        let left = ci_pow_fji_2 + cd_k_xk;
+        let right = Com::commit_scalar_2(Scalar::zero(), zd);
+
+        if left == right.comm.point{
+            return true;
+        }else {
+            return false;
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
