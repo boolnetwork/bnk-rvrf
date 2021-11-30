@@ -244,7 +244,7 @@ impl Verifier {
         let CRS{ c } = self.crs.clone();
         let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
         let Proof{clj,fj:fj_vec,rouk:rouk_vec
-            ,cdk:cdk_vec,zd,zoproof} = proof;
+            ,cdk:cdk_add_vec,zd,zoproof} = proof;
 
         //TODO::
         let mut hash_vec = Vec::new();
@@ -274,16 +274,15 @@ impl Verifier {
 
         ci_pow_fji_2 -= RistrettoPoint::default();
 
-        let mut cdk_add_vec = Vec::new();
-        for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
-            let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
-            for i in 1..number_of_public_keys as usize{
-                cdk_i += cdk_vec[10*j+i];
-            }
-            cdk_add_vec.push(cdk_i);
-        }
-        println!("cdk_vec len = {:?}",cdk_vec.len());
+        // let mut cdk_add_vec = Vec::new();
+        // for j in 0..binary_j_vec_len as usize {
+        //     let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+        //     let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
+        //     for i in 1..number_of_public_keys as usize{
+        //         cdk_i += cdk_vec[10*j+i];
+        //     }
+        //     cdk_add_vec.push(cdk_i);
+        // }
         let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
         for j in 1..binary_j_vec_len as usize {
             let mut x_tmp = Scalar::one();
@@ -309,6 +308,23 @@ impl Verifier {
 mod tests {
     use super::*;
     use std::ops::Index;
+
+    #[test]
+    fn ooom_test() {
+        let l = 5;
+        let witness = Witness::new(l);
+        let r = witness.r;
+        let amount = 10;
+        let statment = Statement::new(amount,l,r);
+        let crs = CRS::new(get_random_scalar(),r);
+
+        let prover = Prover::new(witness,statment.clone(),crs);
+        let proof = prover.prove();
+
+        let verifier = Verifier::new(statment,crs);
+        let result = verifier.verify(proof);
+        assert_eq!(result,true);
+    }
 
     #[test]
     fn generate_sks_test() {
