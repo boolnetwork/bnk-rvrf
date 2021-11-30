@@ -7,6 +7,8 @@ use wedpr_l_crypto_zkp_utils::{
 };
 use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta};
 use crate::zero_or_one::{Prover as ZOProver, CRS as ZOCRS, Proof as ZOProof, Verifier as ZOVerifier};
+use std::ops::Index;
+
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
 
@@ -23,7 +25,8 @@ pub struct Statement {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Witness {
     pub sk: Scalar,
-    pub l: Scalar,
+    pub l: u64,
+    pub r: Scalar,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -48,7 +51,7 @@ pub struct Proof {
     // pub fj: Vec<Scalar>,
     // pub zaj: Vec<Scalar>,
     // pub zbj: Vec<Scalar>,
-    pub zd: Vec<Scalar>,
+    pub zd: Scalar,
     pub zoproof: Vec<ZOProof> // 上面5个本质是这一个东西
 }
 
@@ -73,7 +76,7 @@ impl Statement{
             .map(|sk| Com::commit_scalar_2(sk,r).comm.point )
             .collect();
 
-        pk_vec[l] = Com::commit_scalar_2(Scalar::zero(),r).comm.point;
+        pk_vec[l as usize] = Com::commit_scalar_2(Scalar::zero(),r).comm.point;
 
         Self{
             pk_vec,
@@ -86,7 +89,8 @@ impl Witness {
     pub fn new(l: u64) -> Self {
         Self{
             sk: Scalar::zero(),
-            l: Scalar::from(l),
+            l: l,
+            r: get_random_scalar()
         }
     }
 }
@@ -107,14 +111,113 @@ impl Prover{
 
     pub fn prove(self) -> Proof{
         let CRS{ c } = self.crs.clone();
-        let Statement{pk_vec } = self.statement.clone();
-        let Witness{ sk, l } = self.witness.clone();
-        
+        let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
+        let Witness{ sk, l , r} = self.witness.clone();
+
+        let number_of_public_keys = ci_vec_comm.len() as u64;
+        let binary_j_vec = number_to_binary(number_of_public_keys);
+        let binary_j_vec_len = binary_j_vec.len() as u64;
+
+        let l_vec = fix_len_binary(l , number_of_public_keys);
+
+        let mut rj_vec: Vec<Scalar> = Vec::new();
+        let mut aj_vec: Vec<Scalar> = Vec::new();
+        let mut sj_vec: Vec<Scalar> = Vec::new();
+        let mut tj_vec: Vec<Scalar> = Vec::new();
+        let mut rouk_vec: Vec<Scalar> = Vec::new();
+        let mut cdk_vec: Vec<Scalar> = Vec::new();
+
+        for j in 0..binary_j_vec_len {
+            let rj = get_random_scalar();
+            rj_vec.push(rj);
+            let aj = get_random_scalar();
+            aj_vec.push(aj);
+            let sj = get_random_scalar();
+            sj_vec.push(sj);
+            let tj = get_random_scalar();
+            tj_vec.push(tj);
+            let rouk = get_random_scalar();
+            rouk_vec.push(rouk);
+        }
+
+        let mut f_i_j_poly: Vec<Polynomial<Scalar>> = Vec::new();
+        let mut p_i_k: Vec<Vec<Scalar>> = Vec::new();
+        for i in 0..number_of_public_keys {
+            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let n = i_vec.len();
+            println!("each i = {}, lenth of i/n = {}", i, n);
+            let mut f_j_ij_mul = poly![Scalar::from(1u64)];
+            for j in 0..n {
+                let f_j_ij = if i_vec[j] == 0 {
+                    poly![-aj_vec[j],kronecker_delta(0, l_vec[j])] // (δ0,lj)*x-aj
+                } else {
+                    poly![aj_vec[j],kronecker_delta(1, l_vec[j])] // (δ1,lj)*x+aj
+                };
+                f_j_ij_mul *= f_j_ij;
+            }
+            f_i_j_poly.push(f_j_ij_mul.clone());
+            let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
+            //coefficients.reverse();
+            println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
+            p_i_k.push(coefficients);
+        }
+
+        //TODO::
+        let mut hash_vec = Vec::new();
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
+        let x = hash_to_scalar(&hash_vec);
+
+        // let mut ci_vec_comm = Vec::new();
+        // for i in 0..number_of_public_keys as usize {
+        //     let ci = Com::commit_scalar_2(ci_vec[i], r);
+        //     ci_vec_comm.push(ci.clone());
+        // }
+        let mut cdk_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
+            let zaj = rj_vec[j] * x + sj_vec[j];
+            let zbj = rj_vec[j] * (x - fj) + tj_vec[j];
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+            for i in 0..number_of_public_keys as usize {
+                let cdk =
+                    ci_vec_comm[i].clone() * p_i_k.index(i).index(j);//+ com_rouk.comm.point.clone();
+                cdk_vec.push(cdk);
+            }
+        }
+
+        let mut cdk_add_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+            let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
+            println!("10j = {}",10*j);
+            for i in 1..number_of_public_keys as usize{
+                cdk_i += cdk_vec[10*j+i];
+                println!("aaaa = {}",10*j+i);
+            }
+            cdk_add_vec.push(cdk_i);
+        }
+
+        let mut x_pow_n = Scalar::one();
+        for k in 0..binary_j_vec_len as usize {
+            x_pow_n *= x;
+        }
+
+        let mut rou_k_x_pow_k = rouk_vec[0] * Scalar::one();
+        for j in 1..binary_j_vec_len as usize {
+            let mut x_tmp = Scalar::one();
+            for k in 0..j {
+                println!("k = {:?}",k);
+                x_tmp *= x;
+            }
+            rou_k_x_pow_k += rouk_vec[j] * x_tmp;
+        }
+        let zd = x_pow_n * r - rou_k_x_pow_k;
 
         Proof{
             clj: vec![],
-            cdk: vec![],
-            zd: vec![],
+            cdk: cdk_add_vec,
+            zd: zd,
             zoproof: vec![]
         }
     }
@@ -285,12 +388,37 @@ mod tests {
             cdk_add_vec.push(cdk_i);
         }
 
+        // 直接计算 fji带入方程
         let mut ci_pow_fji =
             ci_vec_comm[0].comm.point.clone() * f_i_j_poly.index(0).eval(x).unwrap();
         for i in 1..number_of_public_keys as usize {
             ci_pow_fji += ci_vec_comm[i].comm.point.clone() * f_i_j_poly.index(i).eval(x).unwrap();
         }
         println!("ci_pow_fji = {:?}",ci_pow_fji);
+        // lj aj 来组成 fj
+        let mut  fj_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
+            fj_vec.push(fj);
+        }
+        let mut ci_pow_fji_2 = RistrettoPoint::default();
+        for i in 0..number_of_public_keys {
+            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let n = i_vec.len();
+            let mut each_f_j_ij = Scalar::one();
+            for j in 0..n {
+                let f_j_ij = if i_vec[j] == 0 {
+                    x - fj_vec[j]
+                }else {
+                    fj_vec[j]
+                };
+                each_f_j_ij *= f_j_ij;
+            }
+            ci_pow_fji_2 += ci_vec_comm[i as usize].comm.point * each_f_j_ij;
+        }
+        ci_pow_fji_2 -= RistrettoPoint::default();
+        assert_eq!(ci_pow_fji,ci_pow_fji_2);
+        //
 
         // 系数 x 测试
         let mut bbb = p_i_k.index(4).index(0) * Scalar::one();
@@ -323,7 +451,6 @@ mod tests {
         xxxx += ci_vec_comm[5].comm.point.clone() * x_tmp;
         xxxx -= RistrettoPoint::default();
         println!("xxxx = {:?}",xxxx);
-        //
 
 
         println!("cdk_vec len = {:?}",cdk_vec.len());
