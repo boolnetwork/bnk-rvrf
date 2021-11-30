@@ -88,6 +88,14 @@ pub fn kronecker_delta(a: u64, b: u64) -> Scalar {
     }
 }
 
+pub fn hash_x(bytes_to_hash:Vec<Vec<u8>>) -> Scalar{
+    let mut hash_vec = Vec::new();
+    for mut bytes in bytes_to_hash {
+        hash_vec.append(&mut bytes)
+    }
+    hash_to_scalar(&hash_vec)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

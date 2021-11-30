@@ -5,7 +5,7 @@ use wedpr_l_crypto_zkp_utils::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta};
+use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta, hash_x};
 use crate::zero_or_one::{Prover as ZOProver, CRS as ZOCRS, Proof as ZOProof, Verifier as ZOVerifier};
 use std::ops::Index;
 
