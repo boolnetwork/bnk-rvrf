@@ -43,9 +43,15 @@ pub struct Verifier {
 }
 
 #[derive(Clone, Debug, Default)]
+pub struct ZoproofCrs {
+    proof:ZOProof,
+    crs:ZOCRS,
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct Proof {
     pub clj: Vec<RistrettoPoint>,
-    pub fj: Vec<Scalar>,
+    pub fj: Vec<Scalar>,    // 与zoproof重复
     pub rouk: Vec<Scalar>,
     // pub caj: Vec<RistrettoPoint>,
     // pub cbj: Vec<RistrettoPoint>,
@@ -54,7 +60,7 @@ pub struct Proof {
     // pub zaj: Vec<Scalar>,
     // pub zbj: Vec<Scalar>,
     pub zd: Scalar,
-    pub zoproof: Vec<ZOProof> // 上面5个本质是这一个东西
+    pub zoproof: Vec<ZoproofCrs> // 包含上面5个注释的外加crs，这里面包含了 fj 和上面是否重复了
 }
 
 impl CRS{
@@ -109,6 +115,19 @@ impl Prover{
 
     pub fn new_2(){
 
+    }
+
+    pub fn proof_zero_or_one(l:Vec<u64>) -> Vec<ZoproofCrs>{
+        let mut zo_proofs = Vec::new();
+        (0..l.len()).into_iter().map(|j| {
+            let p = ZOProver::new(Scalar::from(l[j]));
+            let zoproof = p.proof();
+            zo_proofs.push(ZoproofCrs{
+                proof:zoproof,
+                crs:p.crs
+            });
+        });
+        zo_proofs
     }
 
     pub fn prove(self) -> Proof{
@@ -170,11 +189,6 @@ impl Prover{
         hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
         let x = hash_to_scalar(&hash_vec);
 
-        // let mut ci_vec_comm = Vec::new();
-        // for i in 0..number_of_public_keys as usize {
-        //     let ci = Com::commit_scalar_2(ci_vec[i], r);
-        //     ci_vec_comm.push(ci.clone());
-        // }
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
@@ -227,7 +241,7 @@ impl Prover{
             rouk: rouk_vec,
             cdk: cdk_add_vec,
             zd: zd,
-            zoproof: vec![]
+            zoproof: Self::proof_zero_or_one(l_vec)
         }
     }
 
@@ -240,11 +254,26 @@ impl Verifier {
             crs
         }
     }
+
+    pub fn verify_zero_or_one(proofs:Vec<ZoproofCrs>) -> bool{
+        let mut res = true;
+        for proof in proofs {
+            let v = ZOVerifier::new(proof.crs);
+            let each = v.verify(proof.proof);
+            res = res || each;
+        }
+        res
+    }
+
     pub fn verify(self,proof:Proof) -> bool{
         let CRS{ c } = self.crs.clone();
         let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
         let Proof{clj,fj:fj_vec,rouk:rouk_vec
             ,cdk:cdk_add_vec,zd,zoproof} = proof;
+
+        if Self::verify_zero_or_one(zoproof) == false {
+            return false;
+        }
 
         //TODO::
         let mut hash_vec = Vec::new();
@@ -274,15 +303,6 @@ impl Verifier {
 
         ci_pow_fji_2 -= RistrettoPoint::default();
 
-        // let mut cdk_add_vec = Vec::new();
-        // for j in 0..binary_j_vec_len as usize {
-        //     let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
-        //     let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
-        //     for i in 1..number_of_public_keys as usize{
-        //         cdk_i += cdk_vec[10*j+i];
-        //     }
-        //     cdk_add_vec.push(cdk_i);
-        // }
         let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
         for j in 1..binary_j_vec_len as usize {
             let mut x_tmp = Scalar::one();
