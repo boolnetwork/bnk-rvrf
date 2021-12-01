@@ -119,17 +119,19 @@ impl Prover {
 
     pub fn new_2() {}
 
-    pub fn proof_zero_or_one(l: Vec<u64>) -> Vec<ZoproofCrs> {
+    pub fn proof_zero_or_one(l: Vec<u64>) -> (Vec<ZoproofCrs>, Vec<Scalar>) {
         let mut zo_proofs = Vec::new();
+        let mut aj = Vec::new();
         for each in l {
             let p = ZOProver::new(Scalar::from(each));
-            let zoproof = p.proof();
+            let (zoproof, a) = p.proof_with_a();
+            aj.push(a);
             zo_proofs.push(ZoproofCrs {
                 proof: zoproof,
                 crs: p.crs,
             });
         }
-        zo_proofs
+        (zo_proofs, aj)
     }
 
     pub fn prove(self, extra_x: Vec<Vec<u8>>) -> Proof {
@@ -145,21 +147,11 @@ impl Prover {
 
         let l_vec = fix_len_binary(l, number_of_public_keys);
 
-        let mut rj_vec: Vec<Scalar> = Vec::new();
-        let mut aj_vec: Vec<Scalar> = Vec::new();
-        let mut sj_vec: Vec<Scalar> = Vec::new();
-        let mut tj_vec: Vec<Scalar> = Vec::new();
+        let (zero_one_proof, aj_vec) = Self::proof_zero_or_one(l_vec.clone());
+
         let mut rouk_vec: Vec<Scalar> = Vec::new();
 
         for j in 0..binary_j_vec_len {
-            let rj = get_random_scalar();
-            rj_vec.push(rj);
-            let aj = get_random_scalar();
-            aj_vec.push(aj);
-            let sj = get_random_scalar();
-            sj_vec.push(sj);
-            let tj = get_random_scalar();
-            tj_vec.push(tj);
             let rouk = get_random_scalar();
             rouk_vec.push(rouk);
         }
@@ -201,7 +193,6 @@ impl Prover {
             cdk_add_vec.push(cdk_i);
         }
 
-        let zero_one_proof = Self::proof_zero_or_one(l_vec.clone());
         let mut hash_vec = Vec::new();
         for i in 0..number_of_public_keys as usize {
             hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));

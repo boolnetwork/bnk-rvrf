@@ -51,6 +51,36 @@ impl Prover {
         }
     }
 
+    pub fn proof_with_a(self) -> (Proof, Scalar) {
+        let m = self.m.clone();
+        let r = self.r.clone();
+        let a = get_random_scalar();
+        let s = get_random_scalar();
+        let t = get_random_scalar();
+
+        let ca = Com::commit_scalar_2(a, s);
+        let cb = Com::commit_scalar_2(a * m, t);
+
+        let mut hash_vec = Vec::new();
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
+        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
+        hash_vec.append(&mut point_to_bytes(&ca.comm.point));
+        hash_vec.append(&mut point_to_bytes(&cb.comm.point));
+
+        let x = hash_to_scalar(&hash_vec);
+        let f = m * x + a;
+        (
+            Proof {
+                ca: ca.comm.point,
+                cb: cb.comm.point,
+                f: f,
+                za: r * x + s,
+                zb: r * (x - f) + t,
+            },
+            a,
+        )
+    }
+
     pub fn proof(self) -> Proof {
         let m = self.m.clone();
         let r = self.r.clone();
