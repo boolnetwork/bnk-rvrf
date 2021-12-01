@@ -126,18 +126,18 @@ impl Prover{
 
     pub fn proof_zero_or_one(l:Vec<u64>) -> Vec<ZoproofCrs>{
         let mut zo_proofs = Vec::new();
-        (0..l.len()).into_iter().map(|j| {
-            let p = ZOProver::new(Scalar::from(l[j]));
+        for each in l {
+            let p = ZOProver::new(Scalar::from(each));
             let zoproof = p.proof();
-            zo_proofs.push(ZoproofCrs{
-                proof:zoproof,
-                crs:p.crs
+            zo_proofs.push( ZoproofCrs {
+                proof: zoproof,
+                crs: p.crs
             });
-        });
+        }
         zo_proofs
     }
 
-    pub fn prove(self) -> Proof{
+    pub fn prove(self,extra_x:Vec<Vec<u8>>) -> Proof{
         let CRS{ c } = self.crs.clone();
         let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
         let Witness{ sk, l , r} = self.witness.clone();
@@ -186,12 +186,6 @@ impl Prover{
             p_i_k.push(coefficients);
         }
 
-        //TODO::
-        let mut hash_vec = Vec::new();
-        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
-        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
-        let x = hash_to_scalar(&hash_vec);
-
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             for i in 0..number_of_public_keys as usize {
@@ -210,6 +204,23 @@ impl Prover{
             }
             cdk_add_vec.push(cdk_i);
         }
+        println!("l_vec = {:?}",l_vec);
+        let zero_one_proof = Self::proof_zero_or_one(l_vec.clone());
+        println!("zero_one_proof = {:?}",zero_one_proof);
+        let mut hash_vec = Vec::new();
+        for i in 0..number_of_public_keys as usize {
+            hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
+        }
+        for j in 0..binary_j_vec_len  as usize{
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
+            hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
+        }
+        for mut data in extra_x{
+            hash_vec.append(&mut data)
+        }
+        let x = hash_to_scalar(&hash_vec);
+
 
         let mut rou_k_x_pow_k = rouk_vec[0] * Scalar::one();
         for j in 1..binary_j_vec_len as usize {
@@ -229,7 +240,7 @@ impl Prover{
             rouk: rouk_vec,
             cdk: cdk_add_vec,
             zd: zd,
-            zoproof: Self::proof_zero_or_one(l_vec)
+            zoproof: zero_one_proof
         }
     }
 
@@ -253,25 +264,34 @@ impl Verifier {
         res
     }
 
-    pub fn verify(self,proof:Proof) -> bool{
+    pub fn verify(self,proof:Proof,extra_x:Vec<Vec<u8>>) -> bool{
         let CRS{ c } = self.crs.clone();
         let Statement{ pk_vec: ci_vec_comm } = self.statement.clone();
         let Proof{clj,fj:fj_vec,rouk:rouk_vec
             ,cdk:cdk_add_vec,zd,zoproof} = proof;
 
-        if Self::verify_zero_or_one(zoproof) == false {
+        if Self::verify_zero_or_one(zoproof.clone()) == false {
             return false;
         }
-
-        //TODO::
-        let mut hash_vec = Vec::new();
-        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
-        hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));
-        let x = hash_to_scalar(&hash_vec);
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
         let binary_j_vec_len = binary_j_vec.len() as u64;
+
+        let zero_one_proof = zoproof;
+        let mut hash_vec = Vec::new();
+        for i in 0..number_of_public_keys as usize {
+            hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
+        }
+        for j in 0..binary_j_vec_len  as usize{
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
+            hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
+        }
+        for mut data in extra_x{
+            hash_vec.append(&mut data)
+        }
+        let x = hash_to_scalar(&hash_vec);
 
         let mut ci_pow_fji_2 = RistrettoPoint::default();
         for i in 0..number_of_public_keys {
@@ -323,10 +343,10 @@ mod tests {
         let crs = CRS::new(get_random_scalar(),r);
 
         let prover = Prover::new(witness,statment.clone(),crs);
-        let proof = prover.prove();
+        let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment,crs);
-        let result = verifier.verify(proof);
+        let result = verifier.verify(proof,vec![]);
         assert_eq!(result,true);
     }
 

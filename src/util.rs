@@ -127,4 +127,18 @@ mod tests {
         let a = fix_len_binary(2, 50);
         assert_eq!(a.len(), b.len());
     }
+
+    #[test]
+    fn x_pow_n_test() {
+        let b = x_pow_n(Scalar::from(3u64),8);
+        assert_eq!(b, Scalar::from(6561u64));
+    }
+
+    #[test]
+    fn kronecker_delta_test() {
+        assert_eq!(kronecker_delta(1,0), Scalar::zero());
+        assert_eq!(kronecker_delta(0,1), Scalar::zero());
+        assert_eq!(kronecker_delta(1,1), Scalar::one());
+        assert_eq!(kronecker_delta(0,0), Scalar::one());
+    }
 }

@@ -64,10 +64,10 @@ mod tests {
         let crs = CRS::new(get_random_scalar(),r);
 
         let prover = Prover::new(witness,statment.clone(),crs);
-        let proof = prover.prove();
+        let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment,crs);
-        let result = verifier.verify(proof);
+        let result = verifier.verify(proof,vec![]);
         assert_eq!(result,true);
     }
 
@@ -81,10 +81,10 @@ mod tests {
         let crs = CRS::new(get_random_scalar(),r);
 
         let prover = Prover::new(witness,statment.clone(),crs);
-        let proof = prover.prove();
+        let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment,crs);
-        let result = verifier.verify(proof);
+        let result = verifier.verify(proof,vec![]);
         assert_eq!(result,true);
     }
 }
