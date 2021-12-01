@@ -197,9 +197,9 @@ impl Prover{
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
-            let mut cdk_i = cdk_vec[10*j] + com_rouk.comm.point;
+            let mut cdk_i = cdk_vec[number_of_public_keys as usize *j] + com_rouk.comm.point;
             for i in 1..number_of_public_keys as usize{
-                cdk_i += cdk_vec[10*j+i];
+                cdk_i += cdk_vec[number_of_public_keys as usize*j+i];
             }
             cdk_add_vec.push(cdk_i);
         }

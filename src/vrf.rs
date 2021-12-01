@@ -7,12 +7,14 @@ use wedpr_l_crypto_zkp_utils::{
 };
 use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta};
 
+use crate::one_out_of_many::*;
+
 #[derive(Clone, Debug, Default)]
-pub struct Statement {
+pub struct VRFStatement {
     pub pk_vec: Vec<RistrettoPoint>,
 }
 
-impl Statement{
+impl VRFStatement{
     pub fn new(amount:u64,r:Scalar) -> Self{
         let sks= generate_sks(amount);
         let pk_vec: Vec<RistrettoPoint> = sks
@@ -23,5 +25,33 @@ impl Statement{
         Self{
             pk_vec,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ops::Index;
+
+    #[test]
+    fn vrf_test() {
+
+    }
+
+    #[test]
+    fn ooom_test() {
+        let l = 6;
+        let witness = Witness::new(l);
+        let r = witness.r;
+        let amount = 8;
+        let statment = Statement::new(amount,l,r);
+        let crs = CRS::new(get_random_scalar(),r);
+
+        let prover = Prover::new(witness,statment.clone(),crs);
+        let proof = prover.prove();
+
+        let verifier = Verifier::new(statment,crs);
+        let result = verifier.verify(proof);
+        assert_eq!(result,true);
     }
 }
