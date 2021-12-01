@@ -54,7 +54,6 @@ pub struct ZoproofCrs {
 pub struct Proof {
     pub clj: Vec<RistrettoPoint>,
     pub fj: Vec<Scalar>,
-    pub rouk: Vec<Scalar>,
     pub cdk: Vec<RistrettoPoint>,
     pub zd: Scalar,
     pub zoproof: Vec<ZoproofCrs>,
@@ -218,7 +217,6 @@ impl Prover {
         Proof {
             clj: vec![],
             fj: fj_vec,
-            rouk: rouk_vec,
             cdk: cdk_add_vec,
             zd: zd,
             zoproof: zero_one_proof,
@@ -249,7 +247,6 @@ impl Verifier {
         let Proof {
             clj,
             fj: fj_vec,
-            rouk: rouk_vec,
             cdk: cdk_add_vec,
             zd,
             zoproof,
