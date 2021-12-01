@@ -53,16 +53,11 @@ pub struct ZoproofCrs {
 #[derive(Clone, Debug, Default)]
 pub struct Proof {
     pub clj: Vec<RistrettoPoint>,
-    pub fj: Vec<Scalar>, // 与zoproof重复
+    pub fj: Vec<Scalar>,
     pub rouk: Vec<Scalar>,
-    // pub caj: Vec<RistrettoPoint>,
-    // pub cbj: Vec<RistrettoPoint>,
     pub cdk: Vec<RistrettoPoint>,
-    // pub fj: Vec<Scalar>,
-    // pub zaj: Vec<Scalar>,
-    // pub zbj: Vec<Scalar>,
     pub zd: Scalar,
-    pub zoproof: Vec<ZoproofCrs>, // 包含上面5个注释的外加crs，这里面包含了 fj 和上面是否重复了
+    pub zoproof: Vec<ZoproofCrs>,
 }
 
 impl CRS {
