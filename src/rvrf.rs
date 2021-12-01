@@ -38,7 +38,7 @@ mod tests {
     use std::ops::Index;
 
     #[test]
-    fn vrf_test() {
+    fn rvrf_test() {
         let l = 6;
         let witness = Witness::new(l);
         let r = witness.r;

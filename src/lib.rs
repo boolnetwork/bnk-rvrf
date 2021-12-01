@@ -1,7 +1,7 @@
 mod one_out_of_many;
 mod prf;
+mod rvrf;
 mod util;
-mod vrf;
 mod zero_or_one;
 
 #[cfg(test)]
