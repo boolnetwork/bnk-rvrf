@@ -72,9 +72,8 @@ impl Com {
     }
 }
 
-pub fn generate_pk(sk:Scalar) ->RistrettoPoint{
-    let commitment_point =
-        RistrettoPoint::multiscalar_mul([sk], &[*BASEPOINT_G1]);
+pub fn generate_pk(sk: Scalar) -> RistrettoPoint {
+    let commitment_point = RistrettoPoint::multiscalar_mul([sk], &[*BASEPOINT_G1]);
     commitment_point
 }
 
@@ -94,7 +93,7 @@ pub fn kronecker_delta(a: u64, b: u64) -> Scalar {
     }
 }
 
-pub fn hash_x(bytes_to_hash:Vec<Vec<u8>>) -> Scalar{
+pub fn hash_x(bytes_to_hash: Vec<Vec<u8>>) -> Scalar {
     let mut hash_vec = Vec::new();
     for mut bytes in bytes_to_hash {
         hash_vec.append(&mut bytes)
@@ -103,7 +102,7 @@ pub fn hash_x(bytes_to_hash:Vec<Vec<u8>>) -> Scalar{
 }
 
 // return x^n
-pub fn x_pow_n(x:Scalar,n:u64) -> Scalar{
+pub fn x_pow_n(x: Scalar, n: u64) -> Scalar {
     let mut x_tmp = Scalar::one();
     for k in 0..n {
         x_tmp *= x;
@@ -130,15 +129,15 @@ mod tests {
 
     #[test]
     fn x_pow_n_test() {
-        let b = x_pow_n(Scalar::from(3u64),8);
+        let b = x_pow_n(Scalar::from(3u64), 8);
         assert_eq!(b, Scalar::from(6561u64));
     }
 
     #[test]
     fn kronecker_delta_test() {
-        assert_eq!(kronecker_delta(1,0), Scalar::zero());
-        assert_eq!(kronecker_delta(0,1), Scalar::zero());
-        assert_eq!(kronecker_delta(1,1), Scalar::one());
-        assert_eq!(kronecker_delta(0,0), Scalar::one());
+        assert_eq!(kronecker_delta(1, 0), Scalar::zero());
+        assert_eq!(kronecker_delta(0, 1), Scalar::zero());
+        assert_eq!(kronecker_delta(1, 1), Scalar::one());
+        assert_eq!(kronecker_delta(0, 0), Scalar::one());
     }
 }
