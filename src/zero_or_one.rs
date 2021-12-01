@@ -68,7 +68,6 @@ impl Prover {
         hash_vec.append(&mut point_to_bytes(&cb.comm.point));
 
         let x = hash_to_scalar(&hash_vec);
-        println!("x = {:?}", x);
         let f = m*x+a;
         Proof{
             ca: ca.comm.point,
@@ -96,7 +95,6 @@ impl Verifier {
         hash_vec.append(&mut point_to_bytes(&cb));
 
         let x = hash_to_scalar(&hash_vec);
-        println!("x2 = {:?}", x);
         let c = self.crs.c.clone();
 
 

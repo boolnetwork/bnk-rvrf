@@ -6,7 +6,7 @@ use wedpr_l_crypto_zkp_utils::{
     BASEPOINT_G1, BASEPOINT_G2,
 };
 use crate::util::{Com, Secret, Commitment, generate_sks, kronecker_delta, generate_pk};
-
+use crate::prf::{PRFProver, PRFVerifier, PRFPoof};
 use crate::one_out_of_many::*;
 
 #[derive(Clone, Debug, Default)]
@@ -49,7 +49,7 @@ mod tests {
         let r = witness.r;
         let amount = 15;
 
-        //
+        // 构造 输入参数
         let sks= generate_sks(amount);
         let pk_vec: Vec<RistrettoPoint> = sks.clone()
             .into_iter()
@@ -62,13 +62,18 @@ mod tests {
         //
 
         let crs = CRS::new(get_random_scalar(),r);
+        let rr = get_random_scalar();
 
         let prover = Prover::new(witness,statment.clone(),crs);
-        let proof = prover.prove(vec![]);
+        let proof = prover.prove(vec![]);   //todo!()
+        let proof_prf = PRFProver::proof(sk_witness,rr,get_random_scalar(),-r,c);
 
         let verifier = Verifier::new(statment,crs);
         let result = verifier.verify(proof,vec![]);
+        let proof_prf_result = PRFVerifier::verify(proof_prf,get_random_scalar(),rr);
+
         assert_eq!(result,true);
+        assert_eq!(proof_prf_result,true);
     }
 
     #[test]
