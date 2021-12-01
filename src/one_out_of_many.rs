@@ -200,9 +200,8 @@ impl Prover {
             }
             cdk_add_vec.push(cdk_i);
         }
-        println!("l_vec = {:?}", l_vec);
+
         let zero_one_proof = Self::proof_zero_or_one(l_vec.clone());
-        println!("zero_one_proof = {:?}", zero_one_proof);
         let mut hash_vec = Vec::new();
         for i in 0..number_of_public_keys as usize {
             hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
