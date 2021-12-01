@@ -47,7 +47,7 @@ mod tests {
         let l = 6;
         let witness = Witness::new(l);
         let r = witness.r;
-        let amount = 8;
+        let amount = 15;
 
         //
         let sks= generate_sks(amount);

@@ -19,6 +19,56 @@ pub fn prf_h(input:Scalar) -> RistrettoPoint{
     *BASEPOINT_G1 * input
 }
 
+#[derive(Copy, Clone, Debug, Default)]
+pub struct PRFProver{
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct PRFVerifier{
+}
+impl PRFVerifier {
+    pub fn verify(proof:PRFPoof, x:Scalar, r:Scalar) -> bool{
+        let PRFPoof{m1, m2, y1, y2, c} = proof;
+        let u = prf_h(r);
+
+        let g_y1_h_y2 = Com::commit_scalar_2(y1,y2).comm.point;
+        let m1_c_x = m1 + c * x;
+        assert_eq!(g_y1_h_y2,m1_c_x);
+        let u_y1 = u * y1;
+        // let m2_v_c = m2 + v*x;  //todo() v?
+        // assert_eq!(u_y1,m2_v_c);
+        true
+    }
+}
+impl PRFProver {
+    pub fn proof(sk:Scalar, r:Scalar, x:Scalar, t:Scalar, c:RistrettoPoint) -> PRFPoof{
+        let u = prf_h(r);
+
+        let s_pie = get_random_scalar();
+        let t_pie = get_random_scalar();
+
+        let m1 = Com::commit_scalar_2(s_pie,t_pie).comm.point;
+        let m2 = s_pie * u;
+        let y1 = s_pie + sk * x;
+        let y2 = t_pie + t * x;
+        PRFPoof{
+            m1,
+            m2,
+            y1,
+            y2,
+            c
+        }
+    }
+}
+#[derive(Copy, Clone, Debug, Default)]
+pub struct PRFPoof{
+    pub m1: RistrettoPoint,
+    pub m2: RistrettoPoint,
+    pub y1: Scalar,
+    pub y2: Scalar,
+    pub c:RistrettoPoint
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,7 +91,7 @@ mod tests {
         let y1 = s_pie + sk * x;
         let y2 = t_pie + t * x;
 
-        let v = sk * u;
+        let v = sk * u; // todo()
         let c = Com::commit_scalar_2(sk,t).comm.point;
 
         let g_y1_h_y2 = Com::commit_scalar_2(y1,y2).comm.point;
