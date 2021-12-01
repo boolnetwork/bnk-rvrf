@@ -92,6 +92,13 @@ impl Statement{
     }
 }
 
+impl From<Vec<RistrettoPoint>> for Statement{
+    fn from(pk: Vec<RistrettoPoint>) -> Self {
+        Self{
+            pk_vec:pk
+        }
+    }
+}
 
 impl Witness {
     pub fn new(l: u64) -> Self {

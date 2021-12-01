@@ -72,6 +72,12 @@ impl Com {
     }
 }
 
+pub fn generate_pk(sk:Scalar) ->RistrettoPoint{
+    let commitment_point =
+        RistrettoPoint::multiscalar_mul([sk], &[*BASEPOINT_G1]);
+    commitment_point
+}
+
 pub fn generate_sks(amount: u64) -> Vec<Scalar> {
     let sks_vec: Vec<Scalar> = (0..amount)
         .into_iter()
