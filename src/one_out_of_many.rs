@@ -208,6 +208,7 @@ impl Prover {
             hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
         }
         for j in 0..binary_j_vec_len as usize {
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].crs.c));
             hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
             hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
             hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
@@ -283,6 +284,7 @@ impl Verifier {
             hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
         }
         for j in 0..binary_j_vec_len as usize {
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].crs.c));
             hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
             hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
             hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
