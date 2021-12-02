@@ -396,6 +396,7 @@ version = "0.1.0"
 dependencies = [
  "curve25519-dalek",
  "polynomials",
+ "sha3",
  "wedpr_l_crypto_zkp_utils",
 ]
 

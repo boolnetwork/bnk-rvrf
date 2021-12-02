@@ -8,4 +8,5 @@ edition = "2018"
 [dependencies]
 wedpr_l_crypto_zkp_utils = "1.2"
 curve25519-dalek = "1"
+sha3 = "0.8"
 polynomials = "0.2.4"
