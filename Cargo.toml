@@ -6,7 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wedpr_l_crypto_zkp_utils = "1.2"
-curve25519-dalek = "1"
+zk-utils-test = { git = "https://github.com/prz23/zk-utils-test"}
+curve25519-dalek = "2"
 sha3 = "0.8"
 polynomials = "0.2.4"
