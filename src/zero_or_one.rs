@@ -2,11 +2,11 @@ use crate::util::{fix_len_binary, number_to_binary};
 use crate::util::{Com, Commitment, Secret};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
 use polynomials::*;
+use serde::{Deserialize, Serialize};
 use zk_utils_test::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CRS {

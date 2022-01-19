@@ -5,12 +5,12 @@ use crate::zero_or_one::{
 };
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
 use polynomials::*;
+use serde::{Deserialize, Serialize};
 use std::ops::Index;
 use zk_utils_test::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use serde::{Deserialize, Serialize};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -224,7 +224,7 @@ impl Prover {
         }
     }
 
-    pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof,Scalar) {
+    pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof, Scalar) {
         let CRS { c } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
@@ -310,15 +310,17 @@ impl Prover {
             fj_vec.push(fj);
         }
 
-        (Proof {
-            clj: vec![],
-            fj: fj_vec,
-            cdk: cdk_add_vec,
-            zd: zd,
-            zoproof: zero_one_proof,
-        },x)
+        (
+            Proof {
+                clj: vec![],
+                fj: fj_vec,
+                cdk: cdk_add_vec,
+                zd: zd,
+                zoproof: zero_one_proof,
+            },
+            x,
+        )
     }
-
 }
 
 impl Verifier {
@@ -406,7 +408,7 @@ impl Verifier {
         }
     }
 
-    pub fn verify_return_hash(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> (bool,Scalar) {
+    pub fn verify_return_hash(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> (bool, Scalar) {
         let CRS { c } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
@@ -420,7 +422,7 @@ impl Verifier {
         } = proof;
 
         if Self::verify_zero_or_one(zoproof.clone()) == false {
-            return (false,Scalar::zero());
+            return (false, Scalar::zero());
         }
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
@@ -470,12 +472,11 @@ impl Verifier {
         let right = Com::commit_scalar_2(Scalar::zero(), zd);
 
         if left == right.comm.point {
-            return (true,x);
+            return (true, x);
         } else {
-            return (false,x);
+            return (false, x);
         }
     }
-
 }
 
 #[cfg(test)]

@@ -5,13 +5,13 @@ use crate::zero_or_one::{
 };
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
 use polynomials::*;
+use serde::{Deserialize, Serialize};
+use sha3::Sha3_512;
 use std::ops::Index;
 use zk_utils_test::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
-use sha3::Sha3_512;
-use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
@@ -22,10 +22,8 @@ pub fn prf_h_2(input: Scalar) -> RistrettoPoint {
     *BASEPOINT_G1 * input
 }
 
-pub fn prf_h(input: Scalar) -> RistrettoPoint{
-    RistrettoPoint::hash_from_bytes::<Sha3_512>(
-        input.as_bytes()
-    )
+pub fn prf_h(input: Scalar) -> RistrettoPoint {
+    RistrettoPoint::hash_from_bytes::<Sha3_512>(input.as_bytes())
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -59,7 +57,7 @@ impl PRFVerifier {
         true
     }
 
-    pub fn verify_with_hash(proof: PRFPoof, _x: Scalar, r: Scalar,hash:Scalar) -> bool {
+    pub fn verify_with_hash(proof: PRFPoof, _x: Scalar, r: Scalar, hash: Scalar) -> bool {
         let PRFPoof {
             m1,
             m2,
@@ -110,8 +108,17 @@ impl PRFProver {
         }
     }
 
-    pub fn prove_step_one(sk: Scalar, r: Scalar) -> (RistrettoPoint,RistrettoPoint
-                                                     ,RistrettoPoint,Scalar,Scalar,Vec<Vec<u8>>){
+    pub fn prove_step_one(
+        sk: Scalar,
+        r: Scalar,
+    ) -> (
+        RistrettoPoint,
+        RistrettoPoint,
+        RistrettoPoint,
+        Scalar,
+        Scalar,
+        Vec<Vec<u8>>,
+    ) {
         let u = prf_h(r);
 
         let s_pie = get_random_scalar();
@@ -120,15 +127,24 @@ impl PRFProver {
         let m1 = Com::commit_scalar_2(s_pie, t_pie).comm.point;
         let m2 = s_pie * u;
 
-        let mut hash_vec:Vec<Vec<u8>> = Vec::new();
+        let mut hash_vec: Vec<Vec<u8>> = Vec::new();
         hash_vec.push(point_to_bytes(&m1));
         hash_vec.push(point_to_bytes(&m2));
 
-        (u,m1,m2,s_pie,t_pie,hash_vec)
+        (u, m1, m2, s_pie, t_pie, hash_vec)
     }
 
-    pub fn prove_step_two(sk: Scalar, t: Scalar, c: RistrettoPoint,
-                                 s_pie:Scalar, t_pie:Scalar,u:RistrettoPoint,m1:RistrettoPoint,m2:RistrettoPoint, hash:Scalar ) -> PRFPoof {
+    pub fn prove_step_two(
+        sk: Scalar,
+        t: Scalar,
+        c: RistrettoPoint,
+        s_pie: Scalar,
+        t_pie: Scalar,
+        u: RistrettoPoint,
+        m1: RistrettoPoint,
+        m2: RistrettoPoint,
+        hash: Scalar,
+    ) -> PRFPoof {
         let x = hash;
 
         let y1 = s_pie + sk * x;
@@ -144,7 +160,6 @@ impl PRFProver {
             v,
         }
     }
-
 }
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PRFPoof {
