@@ -10,3 +10,5 @@ zk-utils-test = { git = "https://github.com/prz23/zk-utils-test"}
 curve25519-dalek = "2"
 sha3 = "0.8"
 polynomials = "0.2.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
