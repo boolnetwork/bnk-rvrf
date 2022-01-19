@@ -60,7 +60,7 @@ impl PRFVerifier {
     }
 }
 impl PRFProver {
-    pub fn proof(sk: Scalar, r: Scalar, _x: Scalar, t: Scalar, c: RistrettoPoint) -> PRFPoof {
+    pub fn prove(sk: Scalar, r: Scalar, _x: Scalar, t: Scalar, c: RistrettoPoint) -> PRFPoof {
         let u = prf_h(r);
 
         let s_pie = get_random_scalar();
@@ -122,7 +122,7 @@ mod tests {
         let y2 = t_pie + t * x;
         let c = Com::commit_scalar_2(sk, t).comm.point;
 
-        let proof = PRFProver::proof(sk, r, x, t, c);
+        let proof = PRFProver::prove(sk, r, x, t, c);
         let result = PRFVerifier::verify(proof, x, r);
         assert_eq!(result, true);
     }

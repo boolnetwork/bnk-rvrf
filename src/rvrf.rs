@@ -67,7 +67,7 @@ mod tests {
                 let start = Instant::now();
                 let prover = Prover::new(witness, statment.clone(), crs);
                 let proof = prover.prove(vec![]); //todo!()
-                let proof_prf = PRFProver::proof(sk_witness, rr, get_random_scalar(), -r, c);
+                let proof_prf = PRFProver::prove(sk_witness, rr, get_random_scalar(), -r, c);
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&proof).unwrap().len();
                 let len2 = serde_json::to_string(&proof_prf).unwrap().len();
@@ -112,7 +112,7 @@ mod tests {
 
         let prover = Prover::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]); //todo!()
-        let proof_prf = PRFProver::proof(sk_witness, rr, get_random_scalar(), -r, c);
+        let proof_prf = PRFProver::prove(sk_witness, rr, get_random_scalar(), -r, c);
 
         let verifier = Verifier::new(statment, crs);
         let result = verifier.verify(proof, vec![]);
