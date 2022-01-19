@@ -11,6 +11,7 @@ use zk_utils_test::{
     BASEPOINT_G1, BASEPOINT_G2,
 };
 use sha3::Sha3_512;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
@@ -87,7 +88,7 @@ impl PRFProver {
         }
     }
 }
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PRFPoof {
     pub m1: RistrettoPoint,
     pub m2: RistrettoPoint,

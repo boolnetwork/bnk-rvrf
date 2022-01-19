@@ -10,6 +10,7 @@ use zk_utils_test::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
+use serde::{Deserialize, Serialize};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -44,13 +45,13 @@ pub struct Verifier {
     pub crs: CRS,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ZoproofCrs {
     proof: ZOProof,
     crs: ZOCRS,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Proof {
     pub clj: Vec<RistrettoPoint>,
     pub fj: Vec<Scalar>,

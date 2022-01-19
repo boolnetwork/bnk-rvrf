@@ -37,6 +37,7 @@ mod tests {
     use super::*;
     use std::ops::Index;
     use std::time::{Duration, Instant};
+    use serde_json;
 
     #[test]
     fn rvrf_bench_test() {
@@ -67,7 +68,9 @@ mod tests {
                 let proof = prover.prove(vec![]); //todo!()
                 let proof_prf = PRFProver::proof(sk_witness, rr, get_random_scalar(), -r, c);
                 total_prove += start.elapsed();
-
+                let len1 = serde_json::to_string(&proof).unwrap().len();
+                let len2 = serde_json::to_string(&proof_prf).unwrap().len();
+                println!("size:{:?}",len1+len2);
 
                 let start = Instant::now();
                 let verifier = Verifier::new(statment, crs);

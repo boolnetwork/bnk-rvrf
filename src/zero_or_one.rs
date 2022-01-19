@@ -6,8 +6,9 @@ use zk_utils_test::{
     bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
     BASEPOINT_G1, BASEPOINT_G2,
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CRS {
     pub c: RistrettoPoint,
 }
@@ -19,7 +20,7 @@ pub struct Prover {
     pub r: Scalar,
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Proof {
     pub ca: RistrettoPoint,
     pub cb: RistrettoPoint,
