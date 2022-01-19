@@ -44,7 +44,8 @@ mod tests {
         for amount in 1..50{
             let mut total_prove = Duration::new(0, 0);
             let mut total_verify = Duration::new(0, 0);
-            let samples = 10;
+            let mut total_size = 0usize;
+            let samples = 100;
             for i in 0..samples{
                 let l = 0;
                 let witness = Witness::new(l);
@@ -70,7 +71,7 @@ mod tests {
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&proof).unwrap().len();
                 let len2 = serde_json::to_string(&proof_prf).unwrap().len();
-                println!("size:{:?}",len1+len2);
+                total_size += len1 + len2;
 
                 let start = Instant::now();
                 let verifier = Verifier::new(statment, crs);
@@ -83,7 +84,8 @@ mod tests {
             }
             let total_prove_avg = total_prove / samples;
             let total_verify_avg = total_verify / samples;
-            println!("amount:{:?},prove:{:?},verify:{:?}",amount,total_prove_avg,total_verify_avg);
+            let total_size_avg = total_size / samples as usize;
+            println!("amount:{:?},prove:{:?},verify:{:?},size:{:?}",amount,total_prove_avg,total_verify_avg,total_size_avg);
 
         }
     }
