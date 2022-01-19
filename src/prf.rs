@@ -58,7 +58,29 @@ impl PRFVerifier {
         assert_eq!(u_y1, m2_v_c);
         true
     }
+
+    pub fn verify_with_hash(proof: PRFPoof, _x: Scalar, r: Scalar,hash:Scalar) -> bool {
+        let PRFPoof {
+            m1,
+            m2,
+            y1,
+            y2,
+            c,
+            v,
+        } = proof;
+        let u = prf_h(r);
+        let x = hash;
+
+        let g_y1_h_y2 = Com::commit_scalar_2(y1, y2).comm.point;
+        let m1_c_x = m1 + c * x;
+        assert_eq!(g_y1_h_y2, m1_c_x);
+        let u_y1 = u * y1;
+        let m2_v_c = m2 + v * x; //todo() v?
+        assert_eq!(u_y1, m2_v_c);
+        true
+    }
 }
+
 impl PRFProver {
     pub fn prove(sk: Scalar, r: Scalar, _x: Scalar, t: Scalar, c: RistrettoPoint) -> PRFPoof {
         let u = prf_h(r);
@@ -87,6 +109,42 @@ impl PRFProver {
             v,
         }
     }
+
+    pub fn prove_step_one(sk: Scalar, r: Scalar) -> (RistrettoPoint,RistrettoPoint
+                                                     ,RistrettoPoint,Scalar,Scalar,Vec<Vec<u8>>){
+        let u = prf_h(r);
+
+        let s_pie = get_random_scalar();
+        let t_pie = get_random_scalar();
+
+        let m1 = Com::commit_scalar_2(s_pie, t_pie).comm.point;
+        let m2 = s_pie * u;
+
+        let mut hash_vec:Vec<Vec<u8>> = Vec::new();
+        hash_vec.push(point_to_bytes(&m1));
+        hash_vec.push(point_to_bytes(&m2));
+
+        (u,m1,m2,s_pie,t_pie,hash_vec)
+    }
+
+    pub fn prove_step_two(sk: Scalar, t: Scalar, c: RistrettoPoint,
+                                 s_pie:Scalar, t_pie:Scalar,u:RistrettoPoint,m1:RistrettoPoint,m2:RistrettoPoint, hash:Scalar ) -> PRFPoof {
+        let x = hash;
+
+        let y1 = s_pie + sk * x;
+        let y2 = t_pie + t * x;
+
+        let v = sk * u;
+        PRFPoof {
+            m1,
+            m2,
+            y1,
+            y2,
+            c,
+            v,
+        }
+    }
+
 }
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PRFPoof {

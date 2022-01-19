@@ -223,6 +223,102 @@ impl Prover {
             zoproof: zero_one_proof,
         }
     }
+
+    pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof,Scalar) {
+        let CRS { c } = self.crs.clone();
+        let Statement {
+            pk_vec: ci_vec_comm,
+        } = self.statement.clone();
+        let Witness { sk, l, r } = self.witness.clone();
+
+        let number_of_public_keys = ci_vec_comm.len() as u64;
+        let binary_j_vec = number_to_binary(number_of_public_keys);
+        let binary_j_vec_len = binary_j_vec.len() as u64;
+
+        let l_vec = fix_len_binary(l, number_of_public_keys);
+
+        let (zero_one_proof, aj_vec) = Self::proof_zero_or_one(l_vec.clone());
+
+        let mut rouk_vec: Vec<Scalar> = Vec::new();
+
+        for j in 0..binary_j_vec_len {
+            let rouk = get_random_scalar();
+            rouk_vec.push(rouk);
+        }
+
+        let mut f_i_j_poly: Vec<Polynomial<Scalar>> = Vec::new();
+        let mut p_i_k: Vec<Vec<Scalar>> = Vec::new();
+        for i in 0..number_of_public_keys {
+            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let n = i_vec.len();
+            let mut f_j_ij_mul = poly![Scalar::from(1u64)];
+            for j in 0..n {
+                let f_j_ij = if i_vec[j] == 0 {
+                    poly![-aj_vec[j], kronecker_delta(0, l_vec[j])] // (δ0,lj)*x-aj
+                } else {
+                    poly![aj_vec[j], kronecker_delta(1, l_vec[j])] // (δ1,lj)*x+aj
+                };
+                f_j_ij_mul *= f_j_ij;
+            }
+            f_i_j_poly.push(f_j_ij_mul.clone());
+            let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
+            p_i_k.push(coefficients);
+        }
+
+        let mut cdk_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            for i in 0..number_of_public_keys as usize {
+                let cdk = ci_vec_comm[i].clone() * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
+                cdk_vec.push(cdk);
+            }
+        }
+
+        let mut cdk_add_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let com_rouk = Com::commit_scalar_2(Scalar::zero(), rouk_vec[j]);
+            let mut cdk_i = cdk_vec[number_of_public_keys as usize * j] + com_rouk.comm.point;
+            for i in 1..number_of_public_keys as usize {
+                cdk_i += cdk_vec[number_of_public_keys as usize * j + i];
+            }
+            cdk_add_vec.push(cdk_i);
+        }
+
+        let mut hash_vec = Vec::new();
+        for i in 0..number_of_public_keys as usize {
+            hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
+        }
+        for j in 0..binary_j_vec_len as usize {
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].crs.c));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
+            hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
+        }
+        for mut data in extra_x {
+            hash_vec.append(&mut data)
+        }
+        let x = hash_to_scalar(&hash_vec);
+
+        let mut rou_k_x_pow_k = rouk_vec[0] * Scalar::one();
+        for j in 1..binary_j_vec_len as usize {
+            rou_k_x_pow_k += rouk_vec[j] * x_pow_n(x, j as u64);
+        }
+        let zd = x_pow_n(x, binary_j_vec_len as u64) * r - rou_k_x_pow_k;
+
+        let mut fj_vec = Vec::new();
+        for j in 0..binary_j_vec_len as usize {
+            let fj = Scalar::from(l_vec[j]) * x + aj_vec[j];
+            fj_vec.push(fj);
+        }
+
+        (Proof {
+            clj: vec![],
+            fj: fj_vec,
+            cdk: cdk_add_vec,
+            zd: zd,
+            zoproof: zero_one_proof,
+        },x)
+    }
+
 }
 
 impl Verifier {
@@ -309,6 +405,77 @@ impl Verifier {
             return false;
         }
     }
+
+    pub fn verify_return_hash(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> (bool,Scalar) {
+        let CRS { c } = self.crs.clone();
+        let Statement {
+            pk_vec: ci_vec_comm,
+        } = self.statement.clone();
+        let Proof {
+            clj,
+            fj: fj_vec,
+            cdk: cdk_add_vec,
+            zd,
+            zoproof,
+        } = proof;
+
+        if Self::verify_zero_or_one(zoproof.clone()) == false {
+            return (false,Scalar::zero());
+        }
+
+        let number_of_public_keys = ci_vec_comm.len() as u64;
+        let binary_j_vec = number_to_binary(number_of_public_keys);
+        let binary_j_vec_len = binary_j_vec.len() as u64;
+
+        let zero_one_proof = zoproof;
+        let mut hash_vec = Vec::new();
+        for i in 0..number_of_public_keys as usize {
+            hash_vec.append(&mut point_to_bytes(&ci_vec_comm[i]));
+        }
+        for j in 0..binary_j_vec_len as usize {
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].crs.c));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.ca));
+            hash_vec.append(&mut point_to_bytes(&zero_one_proof[j].proof.cb));
+            hash_vec.append(&mut point_to_bytes(&cdk_add_vec[j]))
+        }
+        for mut data in extra_x {
+            hash_vec.append(&mut data)
+        }
+        let x = hash_to_scalar(&hash_vec);
+
+        let mut ci_pow_fji_2 = RistrettoPoint::default();
+        for i in 0..number_of_public_keys {
+            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let n = i_vec.len();
+            let mut each_f_j_ij = Scalar::one();
+            for j in 0..n {
+                let f_j_ij = if i_vec[j] == 0 {
+                    x - fj_vec[j]
+                } else {
+                    fj_vec[j]
+                };
+                each_f_j_ij *= f_j_ij;
+            }
+            ci_pow_fji_2 += ci_vec_comm[i as usize] * each_f_j_ij;
+        }
+
+        ci_pow_fji_2 -= RistrettoPoint::default();
+
+        let mut cd_k_xk = cdk_add_vec[0] * (-Scalar::one());
+        for j in 1..binary_j_vec_len as usize {
+            cd_k_xk += cdk_add_vec[j] * (-x_pow_n(x, j as u64));
+        }
+
+        let left = ci_pow_fji_2 + cd_k_xk;
+        let right = Com::commit_scalar_2(Scalar::zero(), zd);
+
+        if left == right.comm.point {
+            return (true,x);
+        } else {
+            return (false,x);
+        }
+    }
+
 }
 
 #[cfg(test)]
