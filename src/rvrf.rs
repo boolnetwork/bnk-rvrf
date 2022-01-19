@@ -36,6 +36,54 @@ pub fn generate_pks(amount: u64) -> Vec<RistrettoPoint> {
 mod tests {
     use super::*;
     use std::ops::Index;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn rvrf_bench_test() {
+        for amount in 1..50{
+            let mut total_prove = Duration::new(0, 0);
+            let mut total_verify = Duration::new(0, 0);
+            let samples = 10;
+            for i in 0..samples{
+                let l = 0;
+                let witness = Witness::new(l);
+                let r = witness.r;
+
+                // 构造 输入参数
+                let sks = generate_sks(amount);
+                let pk_vec: Vec<RistrettoPoint> =
+                    sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
+                let sk_witness = sks[l as usize];
+                let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
+                let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
+                let statment: Statement = pks.into();
+                //
+
+                let crs = CRS::new(get_random_scalar(), r);
+                let rr = get_random_scalar();
+
+                let start = Instant::now();
+                let prover = Prover::new(witness, statment.clone(), crs);
+                let proof = prover.prove(vec![]); //todo!()
+                let proof_prf = PRFProver::proof(sk_witness, rr, get_random_scalar(), -r, c);
+                total_prove += start.elapsed();
+
+
+                let start = Instant::now();
+                let verifier = Verifier::new(statment, crs);
+                let result = verifier.verify(proof, vec![]);
+                let proof_prf_result = PRFVerifier::verify(proof_prf, get_random_scalar(), rr);
+                total_verify += start.elapsed();
+
+                assert_eq!(result, true);
+                assert_eq!(proof_prf_result, true);
+            }
+            let total_prove_avg = total_prove / samples;
+            let total_verify_avg = total_verify / samples;
+            println!("amount:{:?},prove:{:?},verify:{:?}",amount,total_prove_avg,total_verify_avg);
+
+        }
+    }
 
     #[test]
     fn rvrf_test() {
