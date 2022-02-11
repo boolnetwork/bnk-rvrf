@@ -76,7 +76,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, crs: CRS, rr: Scal
     hash_vec.push(point_to_bytes(&m2));
     let verifier = Verifier::new(statment, crs);
     let (result, hash) = verifier.verify_return_hash(proof, hash_vec);
-    let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, get_random_scalar(), rr, hash);
+    let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, Scalar::one(), rr, hash);
 
     if result == true && proof_prf_result == true {
         return true;
