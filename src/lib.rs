@@ -1,11 +1,12 @@
 mod one_out_of_many;
 mod prf;
-mod rvrf;
+pub mod rvrf;
 mod util;
 mod zero_or_one;
 
 pub use one_out_of_many::{Prover, Verifier};
 pub use prf::{PRFProver, PRFVerifier};
+pub use rvrf::{rvrf_prove, rvrf_verify};
 pub use util::*;
 
 #[cfg(test)]
