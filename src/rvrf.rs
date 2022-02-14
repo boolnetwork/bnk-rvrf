@@ -83,6 +83,42 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, crs: CRS, rr: Scal
     }
     false
 }
+use std::time::{Duration, Instant};
+
+pub fn rvrf_test_4() -> bool {
+    println!("rvrf_test_4");
+    let l = 6;
+    let a = Scalar::zero();
+    let b = Scalar::one();
+    let c = a + b;
+    let d = generate_pk(c);
+
+    get_random_scalar();
+    rvrf_test_3()
+    //Scalar::one();
+}
+
+pub fn rvrf_test_3() -> bool {
+    let l = 6;
+    let witness = Witness::new(l);
+    let r = witness.r;
+    let amount = 15;
+
+    // 构造 输入参数
+    let sks = generate_sks(amount);
+    let pk_vec: Vec<RistrettoPoint> = sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
+    let sk_witness = sks[l as usize];
+    let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
+    let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
+    let statment: Statement = pks.into();
+    //
+
+    let crs = CRS::new(get_random_scalar(), r);
+    let rr = get_random_scalar();
+
+    let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks, l);
+    rvrf_verify(rvrfproof, statment, crs, rr)
+}
 
 #[cfg(test)]
 mod tests {
