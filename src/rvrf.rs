@@ -85,8 +85,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, crs: CRS, rr: Scal
 }
 use std::time::{Duration, Instant};
 
-pub fn rvrf_test_4() -> bool {
-    println!("rvrf_test_4");
+pub fn rvrf_test_wasm() -> bool {
     let l = 6;
     let a = Scalar::zero();
     let b = Scalar::one();
@@ -94,11 +93,11 @@ pub fn rvrf_test_4() -> bool {
     let d = generate_pk(c);
 
     get_random_scalar();
-    rvrf_test_3()
+    rvrf_full_test_wasm()
     //Scalar::one();
 }
 
-pub fn rvrf_test_3() -> bool {
+pub fn rvrf_full_test_wasm() -> bool {
     let l = 6;
     let witness = Witness::new(l);
     let r = witness.r;
