@@ -48,10 +48,9 @@ pub fn rvrf_prove(
     crs: CRS,
     r: Scalar,
     c: RistrettoPoint,
-    sks: Vec<Scalar>,
-    l: u64,
+    sk: Scalar,
 ) -> RVRFProof {
-    let sk_witness = sks[l as usize];
+    let sk_witness = sk;
     let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
     let prover = Prover::new(witness, statment.clone(), crs);
     let (proof, hash) = prover.prove_return_hash(hash_vec.clone());
@@ -115,7 +114,7 @@ pub fn rvrf_full_test_wasm() -> bool {
     let crs = CRS::new(get_random_scalar(), r);
     let rr = get_random_scalar();
 
-    let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks, l);
+    let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks[l as usize]);
     rvrf_verify(rvrfproof, statment, crs, rr)
 }
 
@@ -153,7 +152,7 @@ mod tests {
                 let rr = get_random_scalar();
 
                 let start = Instant::now();
-                let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks, l);
+                let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks[l as usize]);
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
                 total_size += len1;
@@ -264,7 +263,7 @@ mod tests {
         let crs = CRS::new(get_random_scalar(), r);
         let rr = get_random_scalar();
 
-        let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks, l);
+        let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks[l as usize]);
         let res = rvrf_verify(rvrfproof, statment, crs, rr);
         assert_eq!(res, true);
     }
