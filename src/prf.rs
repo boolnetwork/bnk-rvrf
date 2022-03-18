@@ -171,6 +171,12 @@ pub struct PRFPoof {
     pub v: RistrettoPoint,
 }
 
+impl PRFPoof {
+    pub fn get_v(self) -> RistrettoPoint {
+        self.v
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

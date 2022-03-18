@@ -152,7 +152,8 @@ mod tests {
                 let rr = get_random_scalar();
 
                 let start = Instant::now();
-                let rvrfproof = rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks[l as usize]);
+                let rvrfproof =
+                    rvrf_prove(witness, statment.clone(), rr, crs, r, c, sks[l as usize]);
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
                 total_size += len1;
