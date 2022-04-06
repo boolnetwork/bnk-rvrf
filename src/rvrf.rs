@@ -89,7 +89,8 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
 }
 use std::time::{Duration, Instant};
 
-pub fn rvrf_prove_simple(public_keys:Vec<RistrettoPoint>,secret_key:Scalar,rand:Scalar,index:u64) -> RVRFProof{
+/// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
+pub fn rvrf_prove_simple(public_keys:Vec<RistrettoPoint>,secret_key:Scalar,rand:Scalar, index:u64) -> RVRFProof{
     let l = index;
     let witness = Witness::new(l);
     let r = witness.r;
@@ -104,6 +105,7 @@ pub fn rvrf_prove_simple(public_keys:Vec<RistrettoPoint>,secret_key:Scalar,rand:
     rvrfproof
 }
 
+/// rvrfproof证明  public_keys链上公钥s  rand链上随机数
 pub fn rvrf_verify_simple(rvrfproof:RVRFProof, public_keys:Vec<RistrettoPoint>, rand:Scalar) -> bool{
     let c = rvrfproof.c;
     let pks: Vec<RistrettoPoint> = public_keys.clone().into_iter().map(|each| each - c).collect();
