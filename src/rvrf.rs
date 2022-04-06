@@ -39,6 +39,7 @@ pub struct RVRFProof {
     pub m2: RistrettoPoint,
     pub proof: Proof,
     pub proof_prf: PRFPoof,
+    pub c: RistrettoPoint
 }
 
 pub fn rvrf_prove(
@@ -60,6 +61,7 @@ pub fn rvrf_prove(
         m2,
         proof,
         proof_prf,
+        c
     }
 }
 
@@ -69,6 +71,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
         m2,
         proof,
         proof_prf,
+        c
     } = rvrfproof;
     let crs = CRS::new(get_random_scalar(), get_random_scalar());
 
@@ -85,6 +88,30 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
     false
 }
 use std::time::{Duration, Instant};
+
+pub fn rvrf_prove_simple(public_keys:Vec<RistrettoPoint>,secret_key:Scalar,rand:Scalar,index:u64) -> RVRFProof{
+    let l = index;
+    let witness = Witness::new(l);
+    let r = witness.r;
+    let c = Com::commit_scalar_2(secret_key, -r).comm.point;
+
+    let pks: Vec<RistrettoPoint> = public_keys.clone().into_iter().map(|each| each - c).collect();
+    let statment: Statement = pks.into();
+
+
+    let rvrfproof =
+        rvrf_prove(witness, statment.clone(), rand, r, c, secret_key);
+    rvrfproof
+}
+
+pub fn rvrf_verify_simple(rvrfproof:RVRFProof, public_keys:Vec<RistrettoPoint>, rand:Scalar) -> bool{
+    let c = rvrfproof.c;
+    let pks: Vec<RistrettoPoint> = public_keys.clone().into_iter().map(|each| each - c).collect();
+    let statment: Statement = pks.into();
+
+    let res = rvrf_verify(rvrfproof, statment, rand);
+    res
+}
 
 pub fn rvrf_test_wasm() -> bool {
     let l = 6;
@@ -126,6 +153,56 @@ mod tests {
     use serde_json;
     use std::ops::Index;
     use std::time::{Duration, Instant};
+
+    #[test]
+    fn rvrf_bench_simple_test() {
+        for amount in 1..5 {
+            let mut total_prove = Duration::new(0, 0);
+            let mut total_verify = Duration::new(0, 0);
+            let mut total_size = 0usize;
+            let samples = 10;
+            for i in 0..samples {
+
+                // 链上的那一组公钥中自己的公钥的index
+                let l = 0;
+                let witness = Witness::new(l);
+                let r = witness.r;
+
+                // 构造 输入参数
+                // 一组 私钥 sks  （模拟每个人的私钥）
+                let sks = generate_sks(amount);
+                // 生成对应的 sks 的公钥集合 pk_vec  （链上获取）
+                let pk_vec: Vec<RistrettoPoint> =
+                    sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
+                // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
+                let sk_witness = sks[l as usize];
+
+                // 链上获取 就是 r 用来计算 prf
+                let rr = get_random_scalar();
+
+
+                let start = Instant::now();
+                let rvrfproof =
+                    rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
+                total_prove += start.elapsed();
+                let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
+                total_size += len1;
+
+                let start = Instant::now();
+                let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
+                total_verify += start.elapsed();
+                assert_eq!(res, true);
+
+            }
+            let total_prove_avg = total_prove / samples;
+            let total_verify_avg = total_verify / samples;
+            let total_size_avg = total_size / samples as usize;
+            println!(
+                "amount:{:?},prove:{:?},verify:{:?},size:{:?}",
+                amount, total_prove_avg, total_verify_avg, total_size_avg
+            );
+        }
+    }
 
     #[test]
     fn rvrf_bench_test() {
