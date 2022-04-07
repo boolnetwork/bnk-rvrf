@@ -126,12 +126,9 @@ pub fn rvrf_verify_simple(
         .collect();
     let statment: Statement = pks.into();
 
-    let res = rvrf_verify(rvrfproof.clone(), statment, rand);
-    if res == true {
-        let v = rvrfproof.proof_prf.get_v();
-        Some(v)
-    } else {
-        None
+    match rvrf_verify(rvrfproof.clone(), statment, rand) {
+        true => Some(rvrfproof.proof_prf.get_v()),
+        false => None,
     }
 }
 
