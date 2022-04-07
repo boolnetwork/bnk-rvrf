@@ -39,7 +39,7 @@ pub struct RVRFProof {
     pub m2: RistrettoPoint,
     pub proof: Proof,
     pub proof_prf: PRFPoof,
-    pub c: RistrettoPoint
+    pub c: RistrettoPoint,
 }
 
 pub fn rvrf_prove(
@@ -61,7 +61,7 @@ pub fn rvrf_prove(
         m2,
         proof,
         proof_prf,
-        c
+        c,
     }
 }
 
@@ -71,7 +71,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
         m2,
         proof,
         proof_prf,
-        c
+        c,
     } = rvrfproof;
     let crs = CRS::new(get_random_scalar(), get_random_scalar());
 
@@ -90,29 +90,49 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
 use std::time::{Duration, Instant};
 
 /// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
-pub fn rvrf_prove_simple(public_keys:Vec<RistrettoPoint>,secret_key:Scalar,rand:Scalar, index:u64) -> RVRFProof{
+pub fn rvrf_prove_simple(
+    public_keys: Vec<RistrettoPoint>,
+    secret_key: Scalar,
+    rand: Scalar,
+    index: u64,
+) -> RVRFProof {
     let l = index;
     let witness = Witness::new(l);
     let r = witness.r;
     let c = Com::commit_scalar_2(secret_key, -r).comm.point;
 
-    let pks: Vec<RistrettoPoint> = public_keys.clone().into_iter().map(|each| each - c).collect();
+    let pks: Vec<RistrettoPoint> = public_keys
+        .clone()
+        .into_iter()
+        .map(|each| each - c)
+        .collect();
     let statment: Statement = pks.into();
 
-
-    let rvrfproof =
-        rvrf_prove(witness, statment.clone(), rand, r, c, secret_key);
+    let rvrfproof = rvrf_prove(witness, statment.clone(), rand, r, c, secret_key);
     rvrfproof
 }
 
-/// rvrfproof证明  public_keys链上公钥s  rand链上随机数
-pub fn rvrf_verify_simple(rvrfproof:RVRFProof, public_keys:Vec<RistrettoPoint>, rand:Scalar) -> bool{
+/// rvrfproof证明  public_keys链上公钥s  rand链上随机数  如果true 返回 v 否则 none
+pub fn rvrf_verify_simple(
+    rvrfproof: RVRFProof,
+    public_keys: Vec<RistrettoPoint>,
+    rand: Scalar,
+) -> Option<RistrettoPoint> {
     let c = rvrfproof.c;
-    let pks: Vec<RistrettoPoint> = public_keys.clone().into_iter().map(|each| each - c).collect();
+    let pks: Vec<RistrettoPoint> = public_keys
+        .clone()
+        .into_iter()
+        .map(|each| each - c)
+        .collect();
     let statment: Statement = pks.into();
 
-    let res = rvrf_verify(rvrfproof, statment, rand);
-    res
+    let res = rvrf_verify(rvrfproof.clone(), statment, rand);
+    if res == true {
+        let v = rvrfproof.proof_prf.get_v();
+        Some(v)
+    } else {
+        None
+    }
 }
 
 pub fn rvrf_test_wasm() -> bool {
@@ -164,7 +184,6 @@ mod tests {
             let mut total_size = 0usize;
             let samples = 10;
             for i in 0..samples {
-
                 // 链上的那一组公钥中自己的公钥的index
                 let l = 0;
                 let witness = Witness::new(l);
@@ -182,10 +201,8 @@ mod tests {
                 // 链上获取 就是 r 用来计算 prf
                 let rr = get_random_scalar();
 
-
                 let start = Instant::now();
-                let rvrfproof =
-                    rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
+                let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
                 total_size += len1;
@@ -193,8 +210,7 @@ mod tests {
                 let start = Instant::now();
                 let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
                 total_verify += start.elapsed();
-                assert_eq!(res, true);
-
+                assert!(res.is_some());
             }
             let total_prove_avg = total_prove / samples;
             let total_verify_avg = total_verify / samples;
@@ -214,7 +230,6 @@ mod tests {
             let mut total_size = 0usize;
             let samples = 10;
             for i in 0..samples {
-
                 // 链上的那一组公钥中自己的公钥的index
                 let l = 0;
                 let witness = Witness::new(l);
@@ -243,8 +258,7 @@ mod tests {
                 let rr = get_random_scalar();
 
                 let start = Instant::now();
-                let rvrfproof =
-                    rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
+                let rvrfproof = rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
                 total_prove += start.elapsed();
                 let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
                 total_size += len1;
