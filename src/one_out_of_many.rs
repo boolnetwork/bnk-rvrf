@@ -333,7 +333,7 @@ impl Verifier {
         for proof in proofs {
             let v = ZOVerifier::new(proof.crs);
             let each = v.verify(proof.proof);
-            res = res || each;
+            res = res && each;
         }
         res
     }
