@@ -233,4 +233,23 @@ mod tests {
         let m2_v_c = m2 + v * x;
         assert_eq!(u_y1, m2_v_c);
     }
+
+    #[test]
+    fn curve25519_sk_pk_ed25519_test() {
+        use ed25519_dalek::Keypair;
+        use ed25519_dalek::Signature;
+        use ed25519_dalek::{Signer, Verifier};
+
+        let sk = get_random_scalar();
+        let pk = RistrettoPoint::multiscalar_mul([sk], &[*BASEPOINT_G1]).compress();
+
+        let mut pair:[u8; 64] = [0u8; 64];
+        pair[0..32].copy_from_slice(sk.as_bytes());
+        pair[32..].copy_from_slice(pk.as_bytes());
+        let key_pair = Keypair::from_bytes(&pair).unwrap();
+        let message: &[u8] = b"This is a test of the tsunami alert system.";
+        let signature = key_pair.sign(message);
+        // TODO fix
+        assert!(key_pair.verify(message, &signature).is_ok());
+    }
 }
