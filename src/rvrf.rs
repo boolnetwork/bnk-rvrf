@@ -1,8 +1,11 @@
 use crate::one_out_of_many::*;
 use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
-use crate::util::{fix_len_binary, number_to_binary};
+use crate::util::{
+    ed25519pubkey_to_ristrettopoint, fix_len_binary, intermediary_sk, number_to_binary,
+};
 use crate::util::{generate_pk, generate_sks, kronecker_delta, Com, Commitment, Secret};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
+use ed25519_dalek::{Keypair, PublicKey, SecretKey};
 use polynomials::*;
 use serde::{Deserialize, Serialize};
 use zk_utils_test::{
@@ -144,6 +147,25 @@ pub fn rvrf_test_wasm() -> bool {
     //Scalar::one();
 }
 
+pub fn rvrf_prove_ed25519(
+    public_keys: Vec<PublicKey>,
+    secret_key: SecretKey,
+    rand: Scalar,
+    index: u64,
+) -> RVRFProof {
+    let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+    rvrf_prove_simple(pubkeys, intermediary_sk(&secret_key), rand, index)
+}
+
+pub fn rvrf_verfify_ed25519(
+    rvrfproof: RVRFProof,
+    public_keys: Vec<PublicKey>,
+    rand: Scalar,
+) -> Option<RistrettoPoint> {
+    let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+    rvrf_verify_simple(rvrfproof, pubkeys, rand)
+}
+
 pub fn rvrf_full_test_wasm() -> bool {
     let l = 6;
     let witness = Witness::new(l);
@@ -172,6 +194,60 @@ mod tests {
     use serde_json;
     use std::ops::Index;
     use std::time::{Duration, Instant};
+
+    #[test]
+    fn rvrf_bench_simple_ed25519_test() {
+        for amount in 1..5 {
+            let mut total_prove = Duration::new(0, 0);
+            let mut total_verify = Duration::new(0, 0);
+            let mut total_size = 0usize;
+            let samples = 10;
+            for i in 0..samples {
+                // 链上的那一组公钥中自己的公钥的index
+                let l = 0;
+                let witness = Witness::new(l);
+                let r = witness.r;
+
+                // 构造 输入参数
+                // 一组 私钥 sks  （模拟每个人的私钥）
+                let sks = generate_sks(amount);
+
+                // 生成对应的 sks 的公钥集合 pk_vec  （链上获取）
+                let pk_vec: Vec<PublicKey> = sks
+                    .clone()
+                    .into_iter()
+                    .map(|sk| {
+                        let sk = SecretKey::from_bytes(sk.as_bytes()).unwrap();
+                        let pk: PublicKey = (&sk).into();
+                        pk
+                    })
+                    .collect();
+                // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
+                let sk_witness = SecretKey::from_bytes(sks[l as usize].as_bytes()).unwrap();
+
+                // 链上获取 就是 r 用来计算 prf
+                let rr = get_random_scalar();
+
+                let start = Instant::now();
+                let rvrfproof = rvrf_prove_ed25519(pk_vec.clone(), sk_witness, rr, l);
+                total_prove += start.elapsed();
+                let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
+                total_size += len1;
+
+                let start = Instant::now();
+                let res = rvrf_verfify_ed25519(rvrfproof, pk_vec, rr);
+                total_verify += start.elapsed();
+                assert!(res.is_some());
+            }
+            let total_prove_avg = total_prove / samples;
+            let total_verify_avg = total_verify / samples;
+            let total_size_avg = total_size / samples as usize;
+            println!(
+                "amount:{:?},prove:{:?},verify:{:?},size:{:?}",
+                amount, total_prove_avg, total_verify_avg, total_size_avg
+            );
+        }
+    }
 
     #[test]
     fn rvrf_bench_simple_test() {

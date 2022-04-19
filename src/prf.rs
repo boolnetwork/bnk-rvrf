@@ -236,17 +236,20 @@ mod tests {
 
     #[test]
     fn curve25519_sk_pk_ed25519_test() {
-        use ed25519_dalek::Keypair;
         use ed25519_dalek::Signature;
+        use ed25519_dalek::{Keypair, PublicKey, SecretKey};
         use ed25519_dalek::{Signer, Verifier};
 
         let sk = get_random_scalar();
-        let pk = RistrettoPoint::multiscalar_mul([sk], &[*BASEPOINT_G1]).compress();
 
-        let mut pair:[u8; 64] = [0u8; 64];
-        pair[0..32].copy_from_slice(sk.as_bytes());
-        pair[32..].copy_from_slice(pk.as_bytes());
-        let key_pair = Keypair::from_bytes(&pair).unwrap();
+        let sk = SecretKey::from_bytes(sk.as_bytes()).unwrap();
+        let pk: PublicKey = (&sk).into();
+
+        let key_pair = Keypair {
+            secret: sk,
+            public: pk,
+        };
+
         let message: &[u8] = b"This is a test of the tsunami alert system.";
         let signature = key_pair.sign(message);
         // TODO fix
