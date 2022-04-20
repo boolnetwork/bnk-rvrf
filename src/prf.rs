@@ -1,16 +1,9 @@
-use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{generate_sks, hash_x, kronecker_delta, x_pow_n, Com, Commitment, Secret};
-use crate::zero_or_one::{
-    Proof as ZOProof, Prover as ZOProver, Verifier as ZOVerifier, CRS as ZOCRS,
-};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
-use polynomials::*;
+use crate::util::Com;
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use sha3::Sha3_512;
-use std::ops::Index;
 use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
+    get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1
 };
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -18,6 +11,7 @@ pub struct CRS {
     pub c: RistrettoPoint,
 }
 
+#[allow(dead_code)]
 pub fn prf_h_2(input: Scalar) -> RistrettoPoint {
     *BASEPOINT_G1 * input
 }
@@ -109,7 +103,7 @@ impl PRFProver {
     }
 
     pub fn prove_step_one(
-        sk: Scalar,
+        _sk: Scalar,
         r: Scalar,
     ) -> (
         RistrettoPoint,

@@ -1,12 +1,12 @@
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use curve25519_dalek::{
-    constants::ED25519_BASEPOINT_TABLE, ristretto::RistrettoPoint, scalar::Scalar,
+    ristretto::RistrettoPoint, scalar::Scalar,
     traits::MultiscalarMul,
 };
-use ed25519_dalek::{Keypair, PublicKey, SecretKey};
+use ed25519_dalek::{PublicKey, SecretKey};
 use sha2::{Digest, Sha512};
 use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
+    get_random_scalar, hash_to_scalar,
     BASEPOINT_G1, BASEPOINT_G2,
 };
 
@@ -76,6 +76,7 @@ pub struct Commitment {
     pub point: RistrettoPoint,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct Secret {
     value: Scalar,
@@ -144,7 +145,7 @@ pub fn hash_x(bytes_to_hash: Vec<Vec<u8>>) -> Scalar {
 // return x^n
 pub fn x_pow_n(x: Scalar, n: u64) -> Scalar {
     let mut x_tmp = Scalar::one();
-    for k in 0..n {
+    for _k in 0..n {
         x_tmp *= x;
     }
     x_tmp
