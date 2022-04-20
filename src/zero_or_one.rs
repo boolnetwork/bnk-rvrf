@@ -1,11 +1,8 @@
-use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{Com, Commitment, Secret};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
-use polynomials::*;
+use crate::util::Com;
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
+    get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2,
 };
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
@@ -82,6 +79,7 @@ impl Prover {
         )
     }
 
+    #[allow(dead_code)]
     pub fn proof(self) -> Proof {
         let m = self.m.clone();
         let r = self.r.clone();
@@ -116,13 +114,7 @@ impl Verifier {
     }
 
     pub fn verify(self, proof: Proof) -> bool {
-        let Proof {
-            ca: ca,
-            cb: cb,
-            f: f,
-            za: za,
-            zb: zb,
-        } = proof;
+        let Proof { ca, cb, f, za, zb } = proof;
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
         hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));

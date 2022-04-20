@@ -1,16 +1,13 @@
 use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{generate_sks, hash_x, kronecker_delta, x_pow_n, Com, Commitment, Secret};
+use crate::util::{generate_sks, kronecker_delta, x_pow_n, Com};
 use crate::zero_or_one::{
     Proof as ZOProof, Prover as ZOProver, Verifier as ZOVerifier, CRS as ZOCRS,
 };
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use polynomials::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
-use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
-};
+use zk_utils_test::{get_random_scalar, hash_to_scalar, point_to_bytes};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -130,11 +127,11 @@ impl Prover {
     }
 
     pub fn prove(self, extra_x: Vec<Vec<u8>>) -> Proof {
-        let CRS { c } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
-        let Witness { sk, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness.clone();
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -146,7 +143,7 @@ impl Prover {
 
         let mut rouk_vec: Vec<Scalar> = Vec::new();
 
-        for j in 0..binary_j_vec_len {
+        for _j in 0..binary_j_vec_len {
             let rouk = get_random_scalar();
             rouk_vec.push(rouk);
         }
@@ -166,7 +163,7 @@ impl Prover {
                 f_j_ij_mul *= f_j_ij;
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
-            let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
+            let coefficients: Vec<Scalar> = f_j_ij_mul.into();
             p_i_k.push(coefficients);
         }
 
@@ -225,11 +222,11 @@ impl Prover {
     }
 
     pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof, Scalar) {
-        let CRS { c } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
-        let Witness { sk, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness.clone();
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -241,7 +238,7 @@ impl Prover {
 
         let mut rouk_vec: Vec<Scalar> = Vec::new();
 
-        for j in 0..binary_j_vec_len {
+        for _j in 0..binary_j_vec_len {
             let rouk = get_random_scalar();
             rouk_vec.push(rouk);
         }
@@ -261,7 +258,7 @@ impl Prover {
                 f_j_ij_mul *= f_j_ij;
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
-            let mut coefficients: Vec<Scalar> = f_j_ij_mul.into();
+            let coefficients: Vec<Scalar> = f_j_ij_mul.into();
             p_i_k.push(coefficients);
         }
 
@@ -339,12 +336,12 @@ impl Verifier {
     }
 
     pub fn verify(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> bool {
-        let CRS { c } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
         let Proof {
-            clj,
+            clj: _,
             fj: fj_vec,
             cdk: cdk_add_vec,
             zd,
@@ -409,12 +406,12 @@ impl Verifier {
     }
 
     pub fn verify_return_hash(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> (bool, Scalar) {
-        let CRS { c } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
         let Proof {
-            clj,
+            clj: _,
             fj: fj_vec,
             cdk: cdk_add_vec,
             zd,

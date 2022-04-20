@@ -1,17 +1,11 @@
 use crate::one_out_of_many::*;
 use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
-use crate::util::{
-    ed25519pubkey_to_ristrettopoint, fix_len_binary, intermediary_sk, number_to_binary,
-};
-use crate::util::{generate_pk, generate_sks, kronecker_delta, Com, Commitment, Secret};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
-use ed25519_dalek::{Keypair, PublicKey, SecretKey};
-use polynomials::*;
+use crate::util::{ed25519pubkey_to_ristrettopoint, intermediary_sk};
+use crate::util::{generate_pk, generate_sks, Com};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use ed25519_dalek::{PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
-use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
-};
+use zk_utils_test::{get_random_scalar, point_to_bytes};
 
 #[derive(Clone, Debug, Default)]
 pub struct VRFStatement {
@@ -74,7 +68,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
         m2,
         proof,
         proof_prf,
-        c,
+        c: _,
     } = rvrfproof;
     let crs = CRS::new(get_random_scalar(), get_random_scalar());
 
@@ -90,7 +84,6 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
     }
     false
 }
-use std::time::{Duration, Instant};
 
 /// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
 pub fn rvrf_prove_simple(
@@ -136,11 +129,11 @@ pub fn rvrf_verify_simple(
 }
 
 pub fn rvrf_test_wasm() -> bool {
-    let l = 6;
+    let _l = 6;
     let a = Scalar::zero();
     let b = Scalar::one();
     let c = a + b;
-    let d = generate_pk(c);
+    let _d = generate_pk(c);
 
     get_random_scalar();
     rvrf_full_test_wasm()
@@ -181,7 +174,7 @@ pub fn rvrf_full_test_wasm() -> bool {
     let statment: Statement = pks.into();
     //
 
-    let crs = CRS::new(get_random_scalar(), r);
+    let _crs = CRS::new(get_random_scalar(), r);
     let rr = get_random_scalar();
 
     let rvrfproof = rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
