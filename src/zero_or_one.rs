@@ -2,8 +2,7 @@ use crate::util::Com;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use zk_utils_test::{
-    get_random_scalar, hash_to_scalar, point_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
+    get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2,
 };
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
@@ -115,13 +114,7 @@ impl Verifier {
     }
 
     pub fn verify(self, proof: Proof) -> bool {
-        let Proof {
-            ca,
-            cb,
-            f,
-            za,
-            zb,
-        } = proof;
+        let Proof { ca, cb, f, za, zb } = proof;
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut point_to_bytes(&BASEPOINT_G1));
         hash_vec.append(&mut point_to_bytes(&BASEPOINT_G2));

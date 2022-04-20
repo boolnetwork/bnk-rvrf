@@ -7,9 +7,7 @@ use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use polynomials::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
-use zk_utils_test::{
-     get_random_scalar, hash_to_scalar, point_to_bytes
-};
+use zk_utils_test::{get_random_scalar, hash_to_scalar, point_to_bytes};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -129,11 +127,11 @@ impl Prover {
     }
 
     pub fn prove(self, extra_x: Vec<Vec<u8>>) -> Proof {
-        let CRS { c:_ } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
-        let Witness { sk:_, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness.clone();
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -224,11 +222,11 @@ impl Prover {
     }
 
     pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof, Scalar) {
-        let CRS { c:_ } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
-        let Witness { sk:_, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness.clone();
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -338,12 +336,12 @@ impl Verifier {
     }
 
     pub fn verify(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> bool {
-        let CRS { c:_ } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
         let Proof {
-            clj:_,
+            clj: _,
             fj: fj_vec,
             cdk: cdk_add_vec,
             zd,
@@ -408,12 +406,12 @@ impl Verifier {
     }
 
     pub fn verify_return_hash(self, proof: Proof, extra_x: Vec<Vec<u8>>) -> (bool, Scalar) {
-        let CRS { c:_ } = self.crs.clone();
+        let CRS { c: _ } = self.crs.clone();
         let Statement {
             pk_vec: ci_vec_comm,
         } = self.statement.clone();
         let Proof {
-            clj:_,
+            clj: _,
             fj: fj_vec,
             cdk: cdk_add_vec,
             zd,

@@ -2,9 +2,7 @@ use crate::util::Com;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use sha3::Sha3_512;
-use zk_utils_test::{
-    get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1
-};
+use zk_utils_test::{get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {

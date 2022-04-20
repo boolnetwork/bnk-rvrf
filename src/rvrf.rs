@@ -1,15 +1,11 @@
 use crate::one_out_of_many::*;
 use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
-use crate::util::{
-    ed25519pubkey_to_ristrettopoint, intermediary_sk,
-};
+use crate::util::{ed25519pubkey_to_ristrettopoint, intermediary_sk};
 use crate::util::{generate_pk, generate_sks, Com};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use ed25519_dalek::{PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
-use zk_utils_test::{
-    get_random_scalar, point_to_bytes
-};
+use zk_utils_test::{get_random_scalar, point_to_bytes};
 
 #[derive(Clone, Debug, Default)]
 pub struct VRFStatement {
@@ -72,7 +68,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
         m2,
         proof,
         proof_prf,
-        c:_,
+        c: _,
     } = rvrfproof;
     let crs = CRS::new(get_random_scalar(), get_random_scalar());
 
