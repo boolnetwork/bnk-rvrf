@@ -1,3 +1,6 @@
+#![no_std]
+pub extern crate alloc;
+
 mod one_out_of_many;
 mod prf;
 pub mod rvrf;

@@ -6,6 +6,10 @@ use sha2::{Digest, Sha512};
 use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, BASEPOINT_G1, BASEPOINT_G2};
 
+pub use alloc::vec::Vec;
+use alloc::format;
+use alloc::vec;
+
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
     let pubkeys: Vec<RistrettoPoint> = public_keys
         .into_iter()

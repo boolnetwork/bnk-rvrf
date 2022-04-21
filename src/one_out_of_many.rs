@@ -4,17 +4,22 @@ use crate::util::{generate_sks, kronecker_delta};
 use crate::zero_or_one::Prover as ZOProver;
 #[cfg(feature = "prove")]
 use polynomials::*;
-#[cfg(feature = "prove")]
-use std::ops::Index;
+// #[cfg(feature = "prove")]
+// use std::ops::Index;
 #[cfg(feature = "prove")]
 use zk_utils_test::get_random_scalar;
-
 use crate::util::{fix_len_binary, number_to_binary};
 use crate::util::{x_pow_n, Com};
 use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use zk_utils_test::{hash_to_scalar, point_to_bytes};
+
+pub use alloc::vec::Vec;
+#[cfg(feature = "prove")]
+use alloc::vec;
+#[cfg(feature = "prove")]
+use core::ops::Index;
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r

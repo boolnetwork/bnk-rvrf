@@ -20,5 +20,5 @@ ed25519-dalek = "1"
 
 [features]
 default = ["std"]
-std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "prove"]
+std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "polynomials/std", "prove"]
 prove = ["zk-utils-test/std"]

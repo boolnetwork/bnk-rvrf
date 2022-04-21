@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2};
 
+use alloc::vec::Vec;
+
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CRS {
     pub c: RistrettoPoint,

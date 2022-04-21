@@ -6,6 +6,8 @@ use sha3::Sha3_512;
 use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1};
 
+use alloc::vec::Vec;
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
     pub c: RistrettoPoint,

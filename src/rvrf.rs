@@ -19,6 +19,8 @@ use ed25519_dalek::PublicKey;
 use serde::{Deserialize, Serialize};
 use zk_utils_test::point_to_bytes;
 
+use alloc::vec::Vec;
+
 #[derive(Clone, Debug, Default)]
 pub struct VRFStatement {
     pub pk_vec: Vec<RistrettoPoint>,
