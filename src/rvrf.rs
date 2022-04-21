@@ -1,17 +1,22 @@
 use crate::one_out_of_many::*;
 use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
+#[cfg(feature = "prove")]
+use crate::util::generate_sks;
 use crate::util::{ed25519pubkey_to_ristrettopoint, intermediary_sk};
-use crate::util::{generate_pk, generate_sks, Com};
+use crate::util::{generate_pk, Com};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use ed25519_dalek::{PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
-use zk_utils_test::{get_random_scalar, point_to_bytes};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
+use zk_utils_test::point_to_bytes;
 
 #[derive(Clone, Debug, Default)]
 pub struct VRFStatement {
     pub pk_vec: Vec<RistrettoPoint>,
 }
 
+#[cfg(feature = "prove")]
 impl VRFStatement {
     pub fn new(amount: u64, r: Scalar) -> Self {
         let sks = generate_sks(amount);
@@ -24,6 +29,7 @@ impl VRFStatement {
     }
 }
 
+#[cfg(feature = "prove")]
 pub fn generate_pks(amount: u64) -> Vec<RistrettoPoint> {
     let sks = generate_sks(amount);
     let pk_vec: Vec<RistrettoPoint> = sks.into_iter().map(|sk| generate_pk(sk)).collect();
@@ -39,6 +45,7 @@ pub struct RVRFProof {
     pub c: RistrettoPoint,
 }
 
+#[cfg(feature = "prove")]
 pub fn rvrf_prove(
     witness: Witness,
     statment: Statement,
@@ -70,7 +77,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
         proof_prf,
         c: _,
     } = rvrfproof;
-    let crs = CRS::new(get_random_scalar(), get_random_scalar());
+    let crs = CRS::new(Scalar::default(), Scalar::default());
 
     let mut hash_vec: Vec<Vec<u8>> = Vec::new();
     hash_vec.push(point_to_bytes(&m1));
@@ -85,6 +92,7 @@ pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> boo
     false
 }
 
+#[cfg(feature = "prove")]
 /// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
 pub fn rvrf_prove_simple(
     public_keys: Vec<RistrettoPoint>,
@@ -128,6 +136,7 @@ pub fn rvrf_verify_simple(
     }
 }
 
+#[cfg(feature = "prove")]
 pub fn rvrf_test_wasm() -> bool {
     let _l = 6;
     let a = Scalar::zero();
@@ -140,6 +149,7 @@ pub fn rvrf_test_wasm() -> bool {
     //Scalar::one();
 }
 
+#[cfg(feature = "prove")]
 pub fn rvrf_prove_ed25519(
     public_keys: Vec<PublicKey>,
     secret_key: SecretKey,
@@ -159,6 +169,7 @@ pub fn rvrf_verfify_ed25519(
     rvrf_verify_simple(rvrfproof, pubkeys, rand)
 }
 
+#[cfg(feature = "prove")]
 pub fn rvrf_full_test_wasm() -> bool {
     let l = 6;
     let witness = Witness::new(l);

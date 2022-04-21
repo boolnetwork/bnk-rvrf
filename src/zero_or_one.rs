@@ -1,9 +1,9 @@
 use crate::util::Com;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
-use zk_utils_test::{
-    get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2,
-};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
+use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2};
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CRS {
@@ -38,7 +38,7 @@ impl CRS {
         }
     }
 }
-
+#[cfg(feature = "prove")]
 impl Prover {
     pub fn new(m: Scalar) -> Prover {
         let r = get_random_scalar();

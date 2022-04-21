@@ -2,7 +2,9 @@ use curve25519_dalek::edwards::CompressedEdwardsY;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
 use ed25519_dalek::{PublicKey, SecretKey};
 use sha2::{Digest, Sha512};
-use zk_utils_test::{get_random_scalar, hash_to_scalar, BASEPOINT_G1, BASEPOINT_G2};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
+use zk_utils_test::{hash_to_scalar, BASEPOINT_G1, BASEPOINT_G2};
 
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
     let pubkeys: Vec<RistrettoPoint> = public_keys
@@ -78,6 +80,7 @@ pub struct Secret {
 }
 
 impl Com {
+    #[cfg(feature = "prove")]
     pub fn commit_scalar(value: Scalar) -> Self {
         let secret = get_random_scalar();
         let commitment_point =
@@ -112,6 +115,7 @@ pub fn generate_pk(sk: Scalar) -> RistrettoPoint {
     commitment_point
 }
 
+#[cfg(feature = "prove")]
 pub fn generate_sks(amount: u64) -> Vec<Scalar> {
     let sks_vec: Vec<Scalar> = (0..amount)
         .into_iter()

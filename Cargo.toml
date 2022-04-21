@@ -6,8 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zk-utils-test = { git = "https://github.com/ABMatrix/zk-utils-test.git", branch = "wasm", default-features = false }
-curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", version = "2", default-features = false, features = ["serde", "alloc"] }
+zk-utils-test = { git = "https://github.com/ABMatrix/zk-utils-test.git", branch = "wasm", default-features = false}
+curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", version = "2", default-features = false, features = ["serde", "alloc", "u64_backend"] }
 sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
@@ -20,4 +20,5 @@ ed25519-dalek = "1"
 
 [features]
 default = ["std"]
-std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std"]
+std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "prove"]
+prove = ["zk-utils-test/std"]

@@ -1,5 +1,7 @@
+#[cfg(feature = "prove")]
+use crate::util::generate_sks;
 use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{generate_sks, kronecker_delta, x_pow_n, Com};
+use crate::util::{kronecker_delta, x_pow_n, Com};
 use crate::zero_or_one::{
     Proof as ZOProof, Prover as ZOProver, Verifier as ZOVerifier, CRS as ZOCRS,
 };
@@ -7,7 +9,9 @@ use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use polynomials::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
-use zk_utils_test::{get_random_scalar, hash_to_scalar, point_to_bytes};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
+use zk_utils_test::{hash_to_scalar, point_to_bytes};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -64,7 +68,7 @@ impl CRS {
         }
     }
 }
-
+#[cfg(feature = "prove")]
 impl Statement {
     pub fn new(amount: u64, l: u64, r: Scalar) -> Self {
         if amount < l {
@@ -89,7 +93,7 @@ impl From<Vec<RistrettoPoint>> for Statement {
         Self { pk_vec: pk }
     }
 }
-
+#[cfg(feature = "prove")]
 impl Witness {
     pub fn new(l: u64) -> Self {
         Self {
@@ -100,6 +104,7 @@ impl Witness {
     }
 }
 
+#[cfg(feature = "prove")]
 impl Prover {
     pub fn new(witness: Witness, statement: Statement, crs: CRS) -> Self {
         Self {

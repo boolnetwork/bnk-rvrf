@@ -2,7 +2,9 @@ use crate::util::Com;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
 use sha3::Sha3_512;
-use zk_utils_test::{get_random_scalar, hash_to_scalar, point_to_bytes, BASEPOINT_G1};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
+use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS {
@@ -70,7 +72,7 @@ impl PRFVerifier {
         true
     }
 }
-
+#[cfg(feature = "prove")]
 impl PRFProver {
     pub fn prove(sk: Scalar, r: Scalar, _x: Scalar, t: Scalar, c: RistrettoPoint) -> PRFPoof {
         let u = prf_h(r);
