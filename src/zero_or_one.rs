@@ -30,7 +30,7 @@ pub struct Proof {
 pub struct Verifier {
     pub crs: CRS,
 }
-
+#[cfg(feature = "prove")]
 impl CRS {
     pub fn new(m: Scalar, r: Scalar) -> Self {
         Self {

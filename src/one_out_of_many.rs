@@ -1,16 +1,19 @@
 #[cfg(feature = "prove")]
-use crate::util::generate_sks;
-use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{kronecker_delta, x_pow_n, Com};
-use crate::zero_or_one::{
-    Proof as ZOProof, Prover as ZOProver, Verifier as ZOVerifier, CRS as ZOCRS,
-};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use crate::util::{generate_sks, kronecker_delta};
+#[cfg(feature = "prove")]
+use crate::zero_or_one::Prover as ZOProver;
+#[cfg(feature = "prove")]
 use polynomials::*;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "prove")]
 use std::ops::Index;
 #[cfg(feature = "prove")]
 use zk_utils_test::get_random_scalar;
+
+use crate::util::{fix_len_binary, number_to_binary};
+use crate::util::{x_pow_n, Com};
+use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use serde::{Deserialize, Serialize};
 use zk_utils_test::{hash_to_scalar, point_to_bytes};
 
 // Comck(m; r) = g^m*h^r

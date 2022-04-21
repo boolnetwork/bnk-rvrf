@@ -1,14 +1,22 @@
 use crate::one_out_of_many::*;
-use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
+#[cfg(feature = "prove")]
+use crate::prf::PRFProver;
 #[cfg(feature = "prove")]
 use crate::util::generate_sks;
-use crate::util::{ed25519pubkey_to_ristrettopoint, intermediary_sk};
+#[cfg(feature = "prove")]
+use crate::util::intermediary_sk;
+#[cfg(feature = "prove")]
 use crate::util::{generate_pk, Com};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
-use ed25519_dalek::{PublicKey, SecretKey};
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "prove")]
+use ed25519_dalek::SecretKey;
 #[cfg(feature = "prove")]
 use zk_utils_test::get_random_scalar;
+
+use crate::prf::{PRFPoof, PRFVerifier};
+use crate::util::ed25519pubkey_to_ristrettopoint;
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use ed25519_dalek::PublicKey;
+use serde::{Deserialize, Serialize};
 use zk_utils_test::point_to_bytes;
 
 #[derive(Clone, Debug, Default)]
