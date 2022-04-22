@@ -3,7 +3,7 @@ use p256::{AffinePoint, FieldBytes};
 use rand_core::OsRng;
 
 use core::ops::{Add, AddAssign, Mul, MulAssign, Sub};
-use p256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint};
+use p256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
 use p256::elliptic_curve::Field;
 use p256::ProjectivePoint;
 
@@ -33,32 +33,37 @@ pub fn algorithms_type_prove(input:ScalarSelfDefined, input2:ScalarSelfDefined, 
     input2 * input3;
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ScalarSelfDefined {
     pub data: Scalar,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct PointSelfDefined {
     pub data: AffinePoint,
 }
 
 // trait
 pub trait ScalarTrait:
-    Add<Output = Self> + Mul<Output = Self> + Sub<Output = Self> + MulAssign + AddAssign + Sized
+    Add<Output = Self> + Mul<Output = Self> + Sub<Output = Self> + MulAssign + AddAssign + Clone + Copy + PartialEq + Sized
 {
     type ScalarType;
     fn random_scalar() -> Self;
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
     fn get_self(&self) -> Self;
+    fn one() -> Self;
+    fn zero() -> Self;
+    fn from_u64(n:u64) -> Self;
 }
 
 // trait
 pub trait PointTrait:
-Add<Output = Self> + Sub<Output = Self> + AddAssign + Sized //+ Mul<dyn ScalarTrait>
+Add<Output = Self> + Sub<Output = Self> + AddAssign + Clone + Copy + PartialEq + Sized //+ Mul<dyn ScalarTrait>
 {
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
     fn generator() -> Self;
+    fn generator_2() -> Self;
+    fn point_to_bytes(&self) -> Vec<u8>;
 }
 
 impl MulAssign<ScalarSelfDefined> for ScalarSelfDefined{
@@ -144,6 +149,24 @@ impl ScalarTrait for ScalarSelfDefined {
 
     fn get_self(&self) -> Self{
         self.clone()
+    }
+
+    fn one() -> Self {
+        ScalarSelfDefined{
+            data: Scalar::one()
+        }
+    }
+
+    fn zero() -> Self {
+        ScalarSelfDefined{
+            data: Scalar::zero()
+        }
+    }
+
+    fn from_u64(n: u64) -> Self {
+        ScalarSelfDefined{
+            data: Scalar::from(n)
+        }
     }
 }
 
@@ -280,7 +303,18 @@ impl PointTrait for PointSelfDefined {
             data: AffinePoint::generator()
         }
     }
+
+    fn generator_2() -> Self {
+        PointSelfDefined {
+            data: AffinePoint::generator()
+        }
+    }
+
+    fn point_to_bytes(&self) -> Vec<u8> {
+        self.data.to_encoded_point(true).as_ref().to_vec()
+    }
 }
+
 
 // ======================
 #[test]

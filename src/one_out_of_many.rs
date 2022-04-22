@@ -492,7 +492,7 @@ impl Verifier {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ops::Index;
+    use core::ops::Index;
 
     #[test]
     fn ooom_test() {

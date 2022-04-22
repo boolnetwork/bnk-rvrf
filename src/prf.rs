@@ -177,7 +177,7 @@ impl PRFPoof {
 mod tests {
     use super::*;
     use crate::zero_or_one::Verifier;
-    use std::ops::Index;
+    use core::ops::Index;
 
     #[test]
     fn p_test() {
