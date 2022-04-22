@@ -14,6 +14,16 @@ serde = { version = "1.0", default-features = false, features = ["derive", "allo
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 ed25519-dalek = { version = "1.0.0", default-features = false, features = ["rand", "u64_backend", "alloc"] }
 sha2 = { version = "0.9.1", default-features = false }
+p256 = { version = "0.5.2", default-features = false, features = ["ecdsa"] }
+
+[dependencies.lazy_static]
+version = "1.4.0"
+features = ["spin_no_std"]
+
+[dependencies.rand_core]
+version = "0.5.1"
+default-features = false
+features = ["getrandom"]
 
 [dev-dependencies]
 ed25519-dalek = "1"
