@@ -6,11 +6,11 @@ use sha2::{Digest, Sha512};
 use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, BASEPOINT_G1, BASEPOINT_G2};
 
-pub use alloc::vec::Vec;
 use alloc::format;
 use alloc::vec;
+pub use alloc::vec::Vec;
 
-use crate::traits::{ScalarTrait, PointTrait, ScalarSelfDefined, PointSelfDefined};
+use crate::traits::{ PointTrait, ScalarTrait};
 use core::ops::Mul;
 
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
@@ -69,29 +69,28 @@ pub fn fix_len_binary(num: u64, max: u64) -> Vec<u64> {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Com<S:ScalarTrait,P:PointTrait> {
+pub struct Com<S: ScalarTrait, P: PointTrait> {
     pub comm: Commitment<P>,
     pub secret: Secret<S>,
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Commitment<P:PointTrait> {
+pub struct Commitment<P: PointTrait> {
     pub point: P,
 }
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
-pub struct Secret<S:ScalarTrait> {
+pub struct Secret<S: ScalarTrait> {
     value: S,
     secret: S,
 }
 
-impl <S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, Output = P>>Com<S,P> {
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Com<S, P> {
     #[cfg(feature = "prove")]
     pub fn commit_scalar(value: S) -> Self {
         let secret = S::random_scalar();
-        let commitment_point =
-            value * P::generator() + secret * P::generator_2();
+        let commitment_point = value * P::generator() + secret * P::generator_2();
 
         Self {
             comm: Commitment {
@@ -103,10 +102,9 @@ impl <S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, Output = P>>Co
 
     pub fn commit_scalar_2(value: S, value2: S) -> Self {
         if value == S::zero() {
-            return Self::commit_scalar_3(value,value2);
+            return Self::commit_scalar_3(value, value2);
         }
-        let commitment_point =
-            value * P::generator() + value2 * P::generator_2();
+        let commitment_point = value * P::generator() + value2 * P::generator_2();
 
         Self {
             comm: Commitment {
@@ -127,21 +125,24 @@ impl <S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, Output = P>>Co
                 point: commitment_point,
             },
             secret: Secret {
-                value: S::zero() ,
+                value: S::zero(),
                 secret: value2,
             },
         }
     }
-
 }
 
-pub fn generate_pk<S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, Output = P>>(sk: S) -> P {
+pub fn generate_pk<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+    sk: S,
+) -> P {
     let commitment_point = sk * P::generator();
     commitment_point
 }
 
 #[cfg(feature = "prove")]
-pub fn generate_sks<S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, Output = P>>(amount: u64) -> Vec<S> {
+pub fn generate_sks<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+    amount: u64,
+) -> Vec<S> {
     let sks_vec: Vec<S> = (0..amount)
         .into_iter()
         .map(|_| S::random_scalar())
@@ -149,7 +150,7 @@ pub fn generate_sks<S:ScalarTrait + Mul<P, Output = P> , P: PointTrait + Mul<S, 
     sks_vec
 }
 
-pub fn kronecker_delta<S:ScalarTrait>(a: u64, b: u64) -> S {
+pub fn kronecker_delta<S: ScalarTrait>(a: u64, b: u64) -> S {
     if a == b {
         S::one()
     } else {
@@ -157,7 +158,7 @@ pub fn kronecker_delta<S:ScalarTrait>(a: u64, b: u64) -> S {
     }
 }
 
-pub fn hash_x<S:ScalarTrait>(bytes_to_hash: Vec<Vec<u8>>) -> S {
+pub fn hash_x<S: ScalarTrait>(bytes_to_hash: Vec<Vec<u8>>) -> S {
     let mut hash_vec = Vec::new();
     for mut bytes in bytes_to_hash {
         hash_vec.append(&mut bytes)
@@ -166,7 +167,7 @@ pub fn hash_x<S:ScalarTrait>(bytes_to_hash: Vec<Vec<u8>>) -> S {
 }
 
 // return x^n
-pub fn x_pow_n<S:ScalarTrait>(x: S, n: u64) -> S {
+pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
     let mut x_tmp = S::one();
     for _k in 0..n {
         x_tmp *= x;
@@ -177,6 +178,7 @@ pub fn x_pow_n<S:ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::p256::{ScalarSelfDefined, PointSelfDefined};
     #[test]
     fn number_to_binary_test() {
         let a = number_to_binary(50);
@@ -197,9 +199,21 @@ mod tests {
 
     #[test]
     fn kronecker_delta_test() {
-        assert_eq!(kronecker_delta::<ScalarSelfDefined>(1, 0), ScalarSelfDefined::zero());
-        assert_eq!(kronecker_delta::<ScalarSelfDefined>(0, 1), ScalarSelfDefined::zero());
-        assert_eq!(kronecker_delta::<ScalarSelfDefined>(1, 1), ScalarSelfDefined::one());
-        assert_eq!(kronecker_delta::<ScalarSelfDefined>(0, 0), ScalarSelfDefined::one());
+        assert_eq!(
+            kronecker_delta::<ScalarSelfDefined>(1, 0),
+            ScalarSelfDefined::zero()
+        );
+        assert_eq!(
+            kronecker_delta::<ScalarSelfDefined>(0, 1),
+            ScalarSelfDefined::zero()
+        );
+        assert_eq!(
+            kronecker_delta::<ScalarSelfDefined>(1, 1),
+            ScalarSelfDefined::one()
+        );
+        assert_eq!(
+            kronecker_delta::<ScalarSelfDefined>(0, 0),
+            ScalarSelfDefined::one()
+        );
     }
 }

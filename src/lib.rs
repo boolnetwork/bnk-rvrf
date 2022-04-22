@@ -1,12 +1,14 @@
 #![no_std]
 pub extern crate alloc;
 
-// mod one_out_of_many;
+mod one_out_of_many;
 // mod prf;
 // pub mod rvrf;
+mod traits;
 mod util;
 mod zero_or_one;
-mod traits;
+mod ed25519;
+mod p256;
 
 // pub use one_out_of_many::{Prover, Verifier};
 // pub use prf::{PRFProver, PRFVerifier};
@@ -22,6 +24,5 @@ extern crate lazy_static;
 mod tests {
     use super::*;
     #[test]
-    fn protocol_test() {
-    }
+    fn protocol_test() {}
 }
