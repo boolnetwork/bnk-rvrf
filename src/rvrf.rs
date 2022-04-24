@@ -67,7 +67,7 @@ pub struct RVRFProof<S: ScalarTrait, P: PointTrait> {
 #[cfg(feature = "prove")]
 pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     witness: Witness<S>,
-    statment: Statement<S, P>,
+    statement: Statement<S, P>,
     rr: S,
     r: S,
     c: P,
@@ -76,7 +76,7 @@ pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Ou
     let crs = CRS::new(S::random_scalar(), S::random_scalar());
     let sk_witness = sk;
     let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
-    let prover = Prover::new(witness, statment.clone(), crs);
+    let prover = Prover::new(witness, statement.clone(), crs);
     let (proof, hash) = prover.prove_return_hash(hash_vec.clone());
     let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_pie, t_pie, u, m1, m2, hash);
     RVRFProof {
@@ -90,7 +90,7 @@ pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Ou
 
 pub fn rvrf_verify<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     rvrfproof: RVRFProof<S, P>,
-    statment: Statement<S, P>,
+    statement: Statement<S, P>,
     rr: S,
 ) -> bool {
     let RVRFProof {
@@ -105,7 +105,7 @@ pub fn rvrf_verify<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, O
     let mut hash_vec: Vec<Vec<u8>> = Vec::new();
     hash_vec.push(P::point_to_bytes(&m1));
     hash_vec.push(P::point_to_bytes(&m2));
-    let verifier = Verifier::new(statment, crs);
+    let verifier = Verifier::new(statement, crs);
     let (result, hash) = verifier.verify_return_hash(proof, hash_vec);
     let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, S::one(), rr, hash);
 
@@ -136,9 +136,9 @@ pub fn rvrf_prove_simple<
         .into_iter()
         .map(|each| each - c)
         .collect();
-    let statment: Statement<S, P> = pks.into();
+    let statement: Statement<S, P> = pks.into();
 
-    let rvrfproof = rvrf_prove(witness, statment.clone(), rand, r, c, secret_key);
+    let rvrfproof = rvrf_prove(witness, statement.clone(), rand, r, c, secret_key);
     rvrfproof
 }
 
@@ -157,9 +157,9 @@ pub fn rvrf_verify_simple<
         .into_iter()
         .map(|each| each - c)
         .collect();
-    let statment: Statement<S, P> = pks.into();
+    let statement: Statement<S, P> = pks.into();
 
-    match rvrf_verify(rvrfproof.clone(), statment, rand) {
+    match rvrf_verify(rvrfproof.clone(), statement, rand) {
         true => Some(rvrfproof.proof_prf.get_v()),
         false => None,
     }

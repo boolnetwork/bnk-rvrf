@@ -598,32 +598,28 @@ mod tests {
             ]
         );
     }
-    //
-    // #[test]
-    // fn poly_2_test() {
-    //     use polynomials::*;
-    //
-    //     let x = 5u64;
-    //     let a = poly![6, 10]; // 6x+10  10x+6
-    //     let b = poly![3, 9]; // 3x+9  9x+3
-    //     let c = a * b;
-    //     let result_eval = c.eval(x).unwrap();
-    //     //println!("coeff={:?}", c); // 18x^2+84x+90  90x^2+84x+18 //[18, 84, 90]
-    //     let mut coeff: Vec<u64> = c.into();
-    //     //coeff.reverse();
-    //     let len = coeff.len();
-    //     let mut result_coeff = coeff[0] * 1u64;
-    //     //println!("result_coeff={:?}", result_coeff);
-    //     for i in 1..len {
-    //         let mut tmp_x = 1u64;
-    //         for bb in 0..i {
-    //             tmp_x *= x;
-    //         }
-    //         result_coeff += coeff[i] * tmp_x;
-    //         //println!("result_coeff={:?}", result_coeff);
-    //     }
-    //     assert_eq!(result_eval, result_coeff);
-    // }
+
+    #[test]
+    fn poly_2_test() {
+        use polynomials::*;
+
+        let x = 5u64;
+        let a = poly![6, 10]; // 6x+10  10x+6
+        let b = poly![3, 9]; // 3x+9  9x+3
+        let c = a * b;
+        let result_eval = c.eval(x).unwrap();
+        let mut coeff: Vec<u64> = c.into();
+        let len = coeff.len();
+        let mut result_coeff = coeff[0] * 1u64;
+        for i in 1..len {
+            let mut tmp_x = 1u64;
+            for bb in 0..i {
+                tmp_x *= x;
+            }
+            result_coeff += coeff[i] * tmp_x;
+        }
+        assert_eq!(result_eval, result_coeff);
+    }
 
     #[test]
     fn a_test() {
