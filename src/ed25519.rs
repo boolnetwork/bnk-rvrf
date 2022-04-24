@@ -124,6 +124,10 @@ impl ScalarTrait for ScalarSelfDefined {
             data: Scalar::from(n),
         }
     }
+
+    fn bytes(&self) -> Vec<u8> {
+        self.data.as_bytes().to_vec()
+    }
 }
 
 // ============

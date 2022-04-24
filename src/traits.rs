@@ -3,6 +3,7 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand_core::OsRng;
 use sha2::digest::Output;
 use sha3::{Digest as Digest2, Keccak256};
+use core::fmt::Debug;
 
 // trait
 pub trait ScalarTrait:
@@ -16,6 +17,7 @@ pub trait ScalarTrait:
     + Copy
     + PartialEq
     + Default
+    + Debug
     + Sized
 {
     type ScalarType;
@@ -25,6 +27,7 @@ pub trait ScalarTrait:
     fn one() -> Self;
     fn zero() -> Self;
     fn from_u64(n: u64) -> Self;
+    fn bytes(&self) -> Vec<u8>;
 }
 
 // trait
@@ -37,6 +40,7 @@ pub trait PointTrait:
     + Copy
     + Default
     + PartialEq
+    + Debug
     + Sized //+ Mul<dyn ScalarTrait>
 {
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
