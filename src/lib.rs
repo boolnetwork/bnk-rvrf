@@ -1,14 +1,16 @@
 #![no_std]
 pub extern crate alloc;
 
-mod ed25519;
 mod one_out_of_many;
-mod p256;
 mod prf;
 pub mod rvrf;
 mod traits;
 mod util;
 mod zero_or_one;
+
+mod ed25519;
+mod p256;
+mod secp256k1;
 
 // pub use one_out_of_many::{Prover, Verifier};
 // pub use prf::{PRFProver, PRFVerifier};

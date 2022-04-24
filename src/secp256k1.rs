@@ -1,14 +1,15 @@
-use p256::{AffinePoint, FieldBytes};
-use p256::{NonZeroScalar, Scalar};
+use k256::{AffinePoint, FieldBytes, U256};
+use k256::{NonZeroScalar, Scalar};
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
 
 use crate::traits::{Hash, PointTrait, ScalarTrait, HASH};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use p256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
-use p256::elliptic_curve::Field;
-use p256::ProjectivePoint;
-use p256::elliptic_curve::group::prime::PrimeCurveAffine;
+use k256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
+use k256::elliptic_curve::Field;
+use k256::ProjectivePoint;
+use k256::elliptic_curve::group::prime::PrimeCurveAffine;
+use k256::elliptic_curve::group::GroupEncoding;
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
@@ -88,7 +89,7 @@ impl Neg for ScalarSelfDefined {
     type Output = ScalarSelfDefined;
     fn neg(self) -> ScalarSelfDefined {
         ScalarSelfDefined {
-            data: Scalar::zero() - self.data,
+            data: -self.data,
         }
     }
 }
@@ -108,8 +109,9 @@ impl ScalarTrait for ScalarSelfDefined {
         array.clone_from_slice(&HASH.hash(input));
         let mut bytes = FieldBytes::default();
         bytes.copy_from_slice(&array);
+        let res = Scalar::from_uint_reduced(U256::from_be_slice(&array));
         ScalarSelfDefined {
-            data: Scalar::from_bytes_reduced(&bytes),
+            data: res,
         }
     }
 
@@ -264,23 +266,26 @@ impl PointTrait for PointSelfDefined {
 // ======================
 
 const BASE_POINT2_X: [u8; 32] = [
-    0x70, 0xf7, 0x2b, 0xba, 0xc4, 0x0e, 0x8a, 0x59, 0x4c, 0x91, 0xa7, 0xba, 0xc3, 0x76, 0x59, 0x27,
-    0x89, 0x10, 0x76, 0x4c, 0xd7, 0xc2, 0x0a, 0x7d, 0x65, 0xa5, 0x9a, 0x04, 0xb0, 0xac, 0x2a, 0xde,
-];
-const BASE_POINT2_Y: [u8; 32] = [
-    0x30, 0xe2, 0xfe, 0xb3, 0x8d, 0x82, 0x4e, 0x0e, 0xa2, 0x95, 0x2f, 0x2a, 0x48, 0x5b, 0xbc, 0xdd,
-    0x4c, 0x72, 0x8a, 0x74, 0xf4, 0xfa, 0xc7, 0xdc, 0x0d, 0xc9, 0x90, 0x8d, 0x9a, 0x8d, 0xc1, 0xa4,
+    0x08, 0xd1, 0x32, 0x21, 0xe3, 0xa7, 0x32, 0x6a, 0x34, 0xdd, 0x45, 0x21, 0x4b, 0xa8, 0x01, 0x16,
+    0xdd, 0x14, 0x2e, 0x4b, 0x5f, 0xf3, 0xce, 0x66, 0xa8, 0xdc, 0x7b, 0xfa, 0x03, 0x78, 0xb7, 0x95,
 ];
 
-use p256::NistP256;
+const BASE_POINT2_Y: [u8; 32] = [
+    0x5d, 0x41, 0xac, 0x14, 0x77, 0x61, 0x4b, 0x5c, 0x08, 0x48, 0xd5, 0x0d, 0xbd, 0x56, 0x5e, 0xa2,
+    0x80, 0x7b, 0xcb, 0xa1, 0xdf, 0x0d, 0xf0, 0x7a, 0x82, 0x17, 0xe9, 0xf7, 0xf7, 0xc2, 0xbe, 0x88,
+];
+
+use k256::Secp256k1;
+use k256::elliptic_curve::ops::Reduce;
 
 lazy_static::lazy_static! {
-    static ref BASE_POINT2_ENCODED: EncodedPoint<NistP256> = {
+    static ref BASE_POINT2_ENCODED: EncodedPoint<Secp256k1> = {
         let mut g = [0u8; 65];
         g[0] = 0x04;
         g[1..33].copy_from_slice(&BASE_POINT2_X);
         g[33..].copy_from_slice(&BASE_POINT2_Y);
-        EncodedPoint::from_bytes(&g).unwrap()
+        let res:EncodedPoint<Secp256k1> = EncodedPoint::<Secp256k1>::from_bytes(g).unwrap();
+        res
     };
 
     static ref BASE_POINT2: AffinePoint = AffinePoint::from_encoded_point(&BASE_POINT2_ENCODED).unwrap();

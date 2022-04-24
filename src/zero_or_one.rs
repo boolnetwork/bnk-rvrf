@@ -240,4 +240,17 @@ mod tests {
         let res = v.verify(proof);
         assert_eq!(res, true);
     }
+
+    #[test]
+    fn zero_or_one_secp256k1_test() {
+        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        let m: ScalarSelfDefined = ScalarTrait::zero();
+        let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
+
+        let proof = p.proof();
+
+        let v = Verifier::new(p.crs);
+        let res = v.verify(proof);
+        assert_eq!(res, true);
+    }
 }

@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn rvrf_bench_simple_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+        use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
         for amount in 1..5 {
             let samples = 10;
             for i in 0..samples {
