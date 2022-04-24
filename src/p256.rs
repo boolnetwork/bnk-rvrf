@@ -257,12 +257,6 @@ impl PointTrait for PointSelfDefined {
     fn point_to_bytes(&self) -> Vec<u8> {
         self.data.to_encoded_point(true).as_ref().to_vec()
     }
-
-    // fn default() -> Self {
-    //     PointSelfDefined{
-    //         data:AffinePoint::generator()
-    //     }
-    // }
 }
 
 // ======================

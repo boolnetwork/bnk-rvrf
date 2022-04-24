@@ -6,8 +6,8 @@ use sha3::Sha3_512;
 use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1};
 
-use alloc::vec::Vec;
 use crate::traits::{PointTrait, ScalarTrait};
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 use core::ops::Mul;
 
@@ -17,7 +17,7 @@ pub struct CRS<S: ScalarTrait, P: PointTrait> {
     pub ph: PhantomData<S>,
 }
 
-pub fn prf_h_2<S: ScalarTrait , P: PointTrait>(input: S) -> P {
+pub fn prf_h_2<S: ScalarTrait, P: PointTrait>(input: S) -> P {
     P::hash_to_point(&input.bytes())
 }
 
@@ -32,7 +32,7 @@ pub struct PRFVerifier<S: ScalarTrait, P: PointTrait> {
     pub ph: PhantomData<S>,
     pub ph2: PhantomData<P>,
 }
-impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PRFVerifier<S, P> {
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PRFVerifier<S, P> {
     pub fn verify(proof: PRFPoof<S, P>, _x: S, r: S) -> bool {
         let PRFPoof {
             m1,
@@ -49,7 +49,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PR
         hash_vec.append(&mut P::point_to_bytes(&m2));
         let x = S::hash_to_scalar(&hash_vec);
 
-        let g_y1_h_y2 = Com::<S,P>::commit_scalar_2(y1, y2).comm.point;
+        let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
         assert_eq!(g_y1_h_y2, m1_c_x);
         let u_y1 = u * y1;
@@ -70,7 +70,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PR
         let u = Self::prf_h_2(r);
         let x = hash;
 
-        let g_y1_h_y2 = Com::<S,P>::commit_scalar_2(y1, y2).comm.point;
+        let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
         assert_eq!(g_y1_h_y2, m1_c_x);
         let u_y1 = u * y1;
@@ -84,7 +84,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PR
     }
 }
 #[cfg(feature = "prove")]
-impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PRFProver<S, P> {
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PRFProver<S, P> {
     pub fn prove(sk: S, r: S, _x: S, t: S, c: P) -> PRFPoof<S, P> {
         let u = Self::prf_h_2(r);
 
@@ -113,17 +113,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>PR
         }
     }
 
-    pub fn prove_step_one(
-        _sk: S,
-        r: S,
-    ) -> (
-        P,
-        P,
-        P,
-        S,
-        S,
-        Vec<Vec<u8>>,
-    ) {
+    pub fn prove_step_one(_sk: S, r: S) -> (P, P, P, S, S, Vec<Vec<u8>>) {
         let u = Self::prf_h_2(r);
 
         let s_pie = S::random_scalar();
@@ -180,7 +170,7 @@ pub struct PRFPoof<S: ScalarTrait, P: PointTrait> {
     pub v: P,
 }
 
-impl <S: ScalarTrait, P: PointTrait>PRFPoof<S, P> {
+impl<S: ScalarTrait, P: PointTrait> PRFPoof<S, P> {
     pub fn get_v(self) -> P {
         self.v
     }
@@ -192,24 +182,28 @@ mod tests {
     use crate::zero_or_one::Verifier;
     use core::ops::Index;
 
-    use crate::p256::{ScalarSelfDefined,PointSelfDefined};
+    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
     #[test]
     fn p_test() {
         let sk = ScalarSelfDefined::random_scalar();
         let r = ScalarSelfDefined::random_scalar();
         let x = ScalarSelfDefined::random_scalar();
-        let u = prf_h_2::<ScalarSelfDefined,PointSelfDefined>(r);
+        let u = prf_h_2::<ScalarSelfDefined, PointSelfDefined>(r);
 
         let t = ScalarSelfDefined::random_scalar();
 
         let s_pie = ScalarSelfDefined::random_scalar();
         let t_pie = ScalarSelfDefined::random_scalar();
 
-        let m1 = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(s_pie, t_pie).comm.point;
+        let m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
+            .comm
+            .point;
         let m2 = s_pie * u;
         let y1 = s_pie + sk * x;
         let y2 = t_pie + t * x;
-        let c = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(sk, t).comm.point;
+        let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(sk, t)
+            .comm
+            .point;
 
         let proof = PRFProver::prove(sk, r, x, t, c);
         let result = PRFVerifier::verify(proof, x, r);
@@ -221,22 +215,28 @@ mod tests {
         let sk = ScalarSelfDefined::random_scalar();
         let r = ScalarSelfDefined::random_scalar();
         let x = ScalarSelfDefined::random_scalar();
-        let u = prf_h_2::<ScalarSelfDefined,PointSelfDefined>(r);
+        let u = prf_h_2::<ScalarSelfDefined, PointSelfDefined>(r);
 
         let t = ScalarSelfDefined::random_scalar();
 
         let s_pie = ScalarSelfDefined::random_scalar();
         let t_pie = ScalarSelfDefined::random_scalar();
 
-        let m1 = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(s_pie, t_pie).comm.point;
+        let m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
+            .comm
+            .point;
         let m2 = s_pie * u;
         let y1 = s_pie + sk * x;
         let y2 = t_pie + t * x;
 
         let v = sk * u; // todo()
-        let c = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(sk, t).comm.point;
+        let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(sk, t)
+            .comm
+            .point;
 
-        let g_y1_h_y2 = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(y1, y2).comm.point;
+        let g_y1_h_y2 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(y1, y2)
+            .comm
+            .point;
         let m1_c_x = m1 + c * x;
         assert_eq!(g_y1_h_y2, m1_c_x);
         let u_y1 = u * y1;
@@ -246,10 +246,10 @@ mod tests {
 
     #[test]
     fn curve25519_sk_pk_ed25519_test() {
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         use ed25519_dalek::Signature;
         use ed25519_dalek::{Keypair, PublicKey, SecretKey};
         use ed25519_dalek::{Signer, Verifier};
-        use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
 
         let sk = ScalarSelfDefined::random_scalar();
 

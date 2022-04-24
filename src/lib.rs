@@ -1,11 +1,11 @@
 #![no_std]
 pub extern crate alloc;
 
-mod one_out_of_many;
-mod prf;
-// pub mod rvrf;
 mod ed25519;
+mod one_out_of_many;
 mod p256;
+mod prf;
+pub mod rvrf;
 mod traits;
 mod util;
 mod zero_or_one;
