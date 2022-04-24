@@ -1,46 +1,15 @@
-use p256::{Scalar, NonZeroScalar};
 use p256::{AffinePoint, FieldBytes};
+use p256::{NonZeroScalar, Scalar};
 use rand_core::OsRng;
 
-use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, Neg, SubAssign};
+use crate::traits::{Hash, PointTrait, ScalarTrait, HASH};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use p256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
 use p256::elliptic_curve::Field;
 use p256::ProjectivePoint;
-use crate::traits::{ScalarTrait, PointTrait, HASH, Hash};
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
-
-pub fn algorithms_trait_prove<T: ScalarTrait + Copy, K: PointTrait + Copy + Mul<T>>(
-    input: T,
-    input2: T,
-    input3: K,
-    input4: K,
-) {
-    let mut data = T::random_scalar();
-    data += input;
-    let _ = input + input2;
-    let _ = input - input2;
-    let _ = input * input2;
-    let _ = input3 - input4;
-    input3 * input2;
-}
-
-pub fn algorithms_type_prove(
-    input: ScalarSelfDefined,
-    input2: ScalarSelfDefined,
-    input3: PointSelfDefined,
-    input4: PointSelfDefined,
-) {
-    let mut data = ScalarSelfDefined::random_scalar();
-    data += input;
-    let _ = input + input2;
-    let _ = input - input2;
-    let _ = input * input2;
-    let _ = input3 - input4;
-    input3 * input2;
-    input2 * input3;
-}
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -121,7 +90,6 @@ impl Neg for ScalarSelfDefined {
         }
     }
 }
-
 
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
@@ -294,21 +262,6 @@ impl PointTrait for PointSelfDefined {
 }
 
 // ======================
-#[test]
-fn trait_type_test() {
-    algorithms_trait_prove(
-        ScalarSelfDefined::random_scalar(),
-        ScalarSelfDefined::random_scalar(),
-        PointSelfDefined::generator(),
-        PointSelfDefined::generator(),
-    );
-    algorithms_type_prove(
-        ScalarSelfDefined::random_scalar(),
-        ScalarSelfDefined::random_scalar(),
-        PointSelfDefined::generator(),
-        PointSelfDefined::generator(),
-    );
-}
 
 #[test]
 fn cal_test() {

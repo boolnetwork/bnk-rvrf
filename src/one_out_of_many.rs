@@ -6,24 +6,24 @@ use crate::zero_or_one::Prover as ZOProver;
 use polynomials::*;
 // #[cfg(feature = "prove")]
 // use std::ops::Index;
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
 use crate::util::{fix_len_binary, number_to_binary};
 use crate::util::{x_pow_n, Com};
 use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "prove")]
+use zk_utils_test::get_random_scalar;
 use zk_utils_test::{hash_to_scalar, point_to_bytes};
 
-pub use alloc::vec::Vec;
 #[cfg(feature = "prove")]
 use alloc::vec;
+pub use alloc::vec::Vec;
 #[cfg(feature = "prove")]
 use core::ops::Index;
 
-use crate::traits::{ PointTrait, ScalarTrait};
+use crate::traits::{PointTrait, ScalarTrait};
 use core::marker::PhantomData;
-use core::ops::{Mul,Neg};
+use core::ops::{Mul, Neg};
 
 // Comck(m; r) = g^m*h^r
 // Comck(m; r) = g*m+h*r
@@ -84,7 +84,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> CR
     }
 }
 #[cfg(feature = "prove")]
-impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Statement<S, P> {
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Statement<S, P> {
     pub fn new(amount: u64, l: u64, r: S) -> Self {
         if amount < l {
             return Self::default();
@@ -99,18 +99,24 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Sta
 
         pk_vec[l as usize] = Com::commit_scalar_2(S::zero(), r).comm.point;
 
-        Self { pk_vec, ph: Default::default() }
+        Self {
+            pk_vec,
+            ph: Default::default(),
+        }
     }
 }
 
-impl <S: ScalarTrait, P: PointTrait>  From<Vec<P>> for Statement<S, P> {
+impl<S: ScalarTrait, P: PointTrait> From<Vec<P>> for Statement<S, P> {
     fn from(pk: Vec<P>) -> Self {
-        Self { pk_vec: pk, ph: Default::default() }
+        Self {
+            pk_vec: pk,
+            ph: Default::default(),
+        }
     }
 }
 
 #[cfg(feature = "prove")]
-impl <S: ScalarTrait>  Witness<S> {
+impl<S: ScalarTrait> Witness<S> {
     pub fn new(l: u64) -> Self {
         Self {
             sk: S::zero(),
@@ -121,7 +127,7 @@ impl <S: ScalarTrait>  Witness<S> {
 }
 
 #[cfg(feature = "prove")]
-impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Prover<S, P> {
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Prover<S, P> {
     pub fn new(witness: Witness<S>, statement: Statement<S, P>, crs: CRS<S, P>) -> Self {
         Self {
             witness,
@@ -136,7 +142,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Pr
         let mut zo_proofs = Vec::new();
         let mut aj = Vec::new();
         for each in l {
-            let p = ZOProver::<S,P>::new(S::from_u64(each));
+            let p = ZOProver::<S, P>::new(S::from_u64(each));
             let (zoproof, a) = p.proof_with_a();
             aj.push(a);
             zo_proofs.push(ZoproofCrs {
@@ -150,7 +156,8 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Pr
     pub fn prove(self, extra_x: Vec<Vec<u8>>) -> Proof<S, P> {
         let CRS { c: _, .. } = self.crs.clone();
         let Statement {
-            pk_vec: ci_vec_comm, ..
+            pk_vec: ci_vec_comm,
+            ..
         } = self.statement.clone();
         let Witness { sk: _, l, r } = self.witness.clone();
 
@@ -198,7 +205,7 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Pr
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::<S,P>::commit_scalar_2(S::zero(), rouk_vec[j]);
+            let com_rouk = Com::<S, P>::commit_scalar_2(S::zero(), rouk_vec[j]);
             let mut cdk_i = cdk_vec[number_of_public_keys as usize * j] + com_rouk.comm.point;
             for i in 1..number_of_public_keys as usize {
                 cdk_i += cdk_vec[number_of_public_keys as usize * j + i];
@@ -245,7 +252,8 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Pr
     pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof<S, P>, S) {
         let CRS { c: _, .. } = self.crs.clone();
         let Statement {
-            pk_vec: ci_vec_comm, ..
+            pk_vec: ci_vec_comm,
+            ..
         } = self.statement.clone();
         let Witness { sk: _, l, r } = self.witness.clone();
 
@@ -341,7 +349,9 @@ impl <S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>Pr
     }
 }
 
-impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<S, Output = P>>  Verifier<S, P> {
+impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<S, Output = P>>
+    Verifier<S, P>
+{
     pub fn new(statement: Statement<S, P>, crs: CRS<S, P>) -> Self {
         Self { statement, crs }
     }
@@ -359,7 +369,8 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
     pub fn verify(self, proof: Proof<S, P>, extra_x: Vec<Vec<u8>>) -> bool {
         let CRS { c: _, .. } = self.crs.clone();
         let Statement {
-            pk_vec: ci_vec_comm, ..
+            pk_vec: ci_vec_comm,
+            ..
         } = self.statement.clone();
         let Proof {
             clj: _,
@@ -429,7 +440,8 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
     pub fn verify_return_hash(self, proof: Proof<S, P>, extra_x: Vec<Vec<u8>>) -> (bool, S) {
         let CRS { c: _, .. } = self.crs.clone();
         let Statement {
-            pk_vec: ci_vec_comm, ..
+            pk_vec: ci_vec_comm,
+            ..
         } = self.statement.clone();
         let Proof {
             clj: _,
@@ -504,7 +516,7 @@ mod tests {
 
     #[test]
     fn ooom_ed25519_test() {
-        use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         let l = 5;
         let witness = Witness::<ScalarSelfDefined>::new(l);
         let r = witness.r;
@@ -512,7 +524,8 @@ mod tests {
         let statment = Statement::<ScalarSelfDefined, PointSelfDefined>::new(amount, l, r);
         let crs = CRS::<ScalarSelfDefined, PointSelfDefined>::new(ScalarTrait::random_scalar(), r);
 
-        let prover = Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
+        let prover =
+            Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -522,7 +535,7 @@ mod tests {
 
     #[test]
     fn ooom_p256_test() {
-        use crate::p256::{ScalarSelfDefined,PointSelfDefined};
+        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
         let l = 5;
         let witness = Witness::<ScalarSelfDefined>::new(l);
         let r = witness.r;
@@ -530,7 +543,8 @@ mod tests {
         let statment = Statement::<ScalarSelfDefined, PointSelfDefined>::new(amount, l, r);
         let crs = CRS::<ScalarSelfDefined, PointSelfDefined>::new(ScalarTrait::random_scalar(), r);
 
-        let prover = Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
+        let prover =
+            Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -551,19 +565,38 @@ mod tests {
     //
     #[test]
     fn poly_test() {
+        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
         use polynomials::*;
-        use crate::p256::{ScalarSelfDefined,PointSelfDefined};
 
-        let a = poly![ScalarSelfDefined::random_scalar(), ScalarSelfDefined::random_scalar()];
-        let b = poly![ScalarSelfDefined::random_scalar(), ScalarSelfDefined::random_scalar()];
+        let a = poly![
+            ScalarSelfDefined::random_scalar(),
+            ScalarSelfDefined::random_scalar()
+        ];
+        let b = poly![
+            ScalarSelfDefined::random_scalar(),
+            ScalarSelfDefined::random_scalar()
+        ];
 
         let c = a * b;
 
         // (x + 1)(2x + 3)(1)(1)(1) = 2x^2 + 5x + 3
-        let a = poly![ScalarSelfDefined::from_u64(1), ScalarSelfDefined::from_u64(1)]; // x + 1
-        let b = poly![ScalarSelfDefined::from_u64(2), ScalarSelfDefined::from_u64(3)]; // 2x + 3
+        let a = poly![
+            ScalarSelfDefined::from_u64(1),
+            ScalarSelfDefined::from_u64(1)
+        ]; // x + 1
+        let b = poly![
+            ScalarSelfDefined::from_u64(2),
+            ScalarSelfDefined::from_u64(3)
+        ]; // 2x + 3
         let c = poly![ScalarSelfDefined::from_u64(1)];
-        assert_eq!(a * b * c.clone() * c.clone() * c, poly![ScalarSelfDefined::from_u64(2), ScalarSelfDefined::from_u64(5), ScalarSelfDefined::from_u64(3)]);
+        assert_eq!(
+            a * b * c.clone() * c.clone() * c,
+            poly![
+                ScalarSelfDefined::from_u64(2),
+                ScalarSelfDefined::from_u64(5),
+                ScalarSelfDefined::from_u64(3)
+            ]
+        );
     }
     //
     // #[test]
@@ -595,7 +628,7 @@ mod tests {
     #[test]
     fn a_test() {
         //use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
-        use crate::p256::{ScalarSelfDefined,PointSelfDefined};
+        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
 
         let number_of_public_keys = 10u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -604,7 +637,7 @@ mod tests {
         // 假设 一共10commit（0..9） 其中 index为l（5）个是0
         let l_vec = fix_len_binary(5, number_of_public_keys);
         //println!("l_vec = {:?}", l_vec);
-        let mut ci_vec = generate_sks::<ScalarSelfDefined,PointSelfDefined>(10);
+        let mut ci_vec = generate_sks::<ScalarSelfDefined, PointSelfDefined>(10);
         // index =  0 1 2 3 4 5 6 7 8 9
         ci_vec[5] = ScalarSelfDefined::zero();
 
@@ -630,9 +663,15 @@ mod tests {
             tj_vec.push(tj);
             let rouk = ScalarSelfDefined::random_scalar();
             rouk_vec.push(rouk);
-            let clj = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ScalarSelfDefined::from_u64(l_vec[j as usize]), rj);
-            let caj = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(aj, sj);
-            let cbj = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ScalarSelfDefined::from_u64(l_vec[j as usize]) * aj, tj);
+            let clj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+                ScalarSelfDefined::from_u64(l_vec[j as usize]),
+                rj,
+            );
+            let caj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(aj, sj);
+            let cbj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+                ScalarSelfDefined::from_u64(l_vec[j as usize]) * aj,
+                tj,
+            );
         }
 
         let mut f_i_j_poly: Vec<Polynomial<ScalarSelfDefined>> = Vec::new();
@@ -669,7 +708,7 @@ mod tests {
 
         let mut ci_vec_comm = Vec::new();
         for i in 0..number_of_public_keys as usize {
-            let ci = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ci_vec[i], r);
+            let ci = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(ci_vec[i], r);
             ci_vec_comm.push(ci.clone());
         }
 
@@ -678,7 +717,10 @@ mod tests {
             let fj = ScalarSelfDefined::from_u64(l_vec[j]) * x + aj_vec[j];
             let zaj = rj_vec[j] * x + sj_vec[j];
             let zbj = rj_vec[j] * (x - fj) + tj_vec[j];
-            let com_rouk = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ScalarSelfDefined::zero(), rouk_vec[j]);
+            let com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+                ScalarSelfDefined::zero(),
+                rouk_vec[j],
+            );
             for i in 0..number_of_public_keys as usize {
                 let cdk = ci_vec_comm[i].comm.point.clone() * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
@@ -687,7 +729,10 @@ mod tests {
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ScalarSelfDefined::zero(), rouk_vec[j]);
+            let com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+                ScalarSelfDefined::zero(),
+                rouk_vec[j],
+            );
             let mut cdk_i = cdk_vec[10 * j] + com_rouk.comm.point;
             //println!("10j = {}", 10 * j);
             for i in 1..number_of_public_keys as usize {
@@ -765,7 +810,10 @@ mod tests {
             rou_k_x_pow_k += rouk_vec[j] * x_pow_n(x, j as u64);
         }
         let zd = x_pow_n(x, binary_j_vec_len as u64) * r - rou_k_x_pow_k;
-        let right = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_2(ScalarSelfDefined::zero(), zd);
+        let right = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+            ScalarSelfDefined::zero(),
+            zd,
+        );
         //println!("right = {:?}", right.comm.point);
 
         if left == right.comm.point {

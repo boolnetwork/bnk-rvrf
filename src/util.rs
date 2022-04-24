@@ -10,7 +10,7 @@ use alloc::format;
 use alloc::vec;
 pub use alloc::vec::Vec;
 
-use crate::traits::{ PointTrait, ScalarTrait};
+use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
 
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
@@ -178,7 +178,7 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::p256::{ScalarSelfDefined, PointSelfDefined};
+    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
     #[test]
     fn number_to_binary_test() {
         let a = number_to_binary(50);

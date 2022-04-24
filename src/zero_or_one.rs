@@ -150,10 +150,10 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
     use core::ops::Index;
     use p256::elliptic_curve::sec1::EncodedPoint;
     use p256::AffinePoint;
-    use crate::p256::{ScalarSelfDefined,PointSelfDefined};
 
     #[test]
     fn zero_or_one_raw_test() {
@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn zero_or_one_ed25519_test() {
-        use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         let m: ScalarSelfDefined = ScalarTrait::zero();
         let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
 
@@ -240,5 +240,4 @@ mod tests {
         let res = v.verify(proof);
         assert_eq!(res, true);
     }
-
 }

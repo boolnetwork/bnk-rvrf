@@ -1,12 +1,11 @@
-use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, Neg, SubAssign};
-use crate::traits::{ScalarTrait, PointTrait, HASH, Hash};
+use crate::traits::{Hash, PointTrait, ScalarTrait, HASH};
 use alloc::vec::Vec;
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand_core::OsRng;
 
+use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
-use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_POINT, RISTRETTO_BASEPOINT_COMPRESSED};
 use sha3::Sha3_512;
-
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -82,12 +81,9 @@ impl<'o> Sub<&'o ScalarSelfDefined> for ScalarSelfDefined {
 impl Neg for ScalarSelfDefined {
     type Output = ScalarSelfDefined;
     fn neg(self) -> ScalarSelfDefined {
-        ScalarSelfDefined {
-            data:  -self.data,
-        }
+        ScalarSelfDefined { data: -self.data }
     }
 }
-
 
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
@@ -102,9 +98,8 @@ impl ScalarTrait for ScalarSelfDefined {
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
         let mut array = [0; 32];
         array.clone_from_slice(&HASH.hash(input));
-        ScalarSelfDefined{
-            data: Scalar::from_bytes_mod_order(array)
-
+        ScalarSelfDefined {
+            data: Scalar::from_bytes_mod_order(array),
         }
     }
 
@@ -187,7 +182,7 @@ impl Add<PointSelfDefined> for PointSelfDefined {
     type Output = PointSelfDefined;
     fn add(self, other: PointSelfDefined) -> PointSelfDefined {
         PointSelfDefined {
-            data:self.data + other.data,
+            data: self.data + other.data,
         }
     }
 }
@@ -219,8 +214,6 @@ impl SubAssign for PointSelfDefined {
 }
 
 impl PointTrait for PointSelfDefined {
-    //type PointType = Self;
-
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
         PointSelfDefined {
             data: RistrettoPoint::default(),
@@ -235,8 +228,8 @@ impl PointTrait for PointSelfDefined {
 
     fn generator_2() -> Self {
         PointSelfDefined {
-            data:         RistrettoPoint::hash_from_bytes::<Sha3_512>(
-                RISTRETTO_BASEPOINT_COMPRESSED.as_bytes()
+            data: RistrettoPoint::hash_from_bytes::<Sha3_512>(
+                RISTRETTO_BASEPOINT_COMPRESSED.as_bytes(),
             ),
         }
     }
@@ -244,5 +237,4 @@ impl PointTrait for PointSelfDefined {
     fn point_to_bytes(&self) -> Vec<u8> {
         self.data.compress().to_bytes().to_vec()
     }
-
 }

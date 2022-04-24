@@ -1,24 +1,22 @@
-
-
+use alloc::vec::Vec;
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use rand_core::OsRng;
 use sha2::digest::Output;
 use sha3::{Digest as Digest2, Keccak256};
-use rand_core::OsRng;
-use alloc::vec::Vec;
-use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, Neg, SubAssign};
 
 // trait
 pub trait ScalarTrait:
-Add<Output = Self>
-+ Mul<Output = Self>
-+ Sub<Output = Self>
-+ Neg<Output = Self>
-+ MulAssign
-+ AddAssign
-+ Clone
-+ Copy
-+ PartialEq
-+ Default
-+ Sized
+    Add<Output = Self>
+    + Mul<Output = Self>
+    + Sub<Output = Self>
+    + Neg<Output = Self>
+    + MulAssign
+    + AddAssign
+    + Clone
+    + Copy
+    + PartialEq
+    + Default
+    + Sized
 {
     type ScalarType;
     fn random_scalar() -> Self;
@@ -31,8 +29,15 @@ Add<Output = Self>
 
 // trait
 pub trait PointTrait:
-Add<Output = Self> + Sub<Output = Self> + AddAssign + SubAssign + Clone + Copy + Default + PartialEq + Sized
-//+ Mul<dyn ScalarTrait>
+    Add<Output = Self>
+    + Sub<Output = Self>
+    + AddAssign
+    + SubAssign
+    + Clone
+    + Copy
+    + Default
+    + PartialEq
+    + Sized //+ Mul<dyn ScalarTrait>
 {
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
     fn generator() -> Self;
