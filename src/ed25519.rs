@@ -220,7 +220,7 @@ impl SubAssign for PointSelfDefined {
 impl PointTrait for PointSelfDefined {
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
         PointSelfDefined {
-            data: RistrettoPoint::default(),
+            data: RistrettoPoint::hash_from_bytes::<Sha3_512>(input.as_ref()),
         }
     }
 
