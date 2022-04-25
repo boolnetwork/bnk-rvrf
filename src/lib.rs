@@ -15,12 +15,9 @@ pub mod ed25519;
 pub mod p256;
 pub mod secp256k1;
 
-// pub use one_out_of_many::{Prover, Verifier};
-// pub use prf::{PRFProver, PRFVerifier};
-// #[cfg(feature = "prove")]
-// pub use rvrf::rvrf_prove_simple;
-// pub use rvrf::rvrf_verify_simple;
-// pub use util::*;
+#[cfg(feature = "prove")]
+pub use rvrf::rvrf_prove_simple;
+pub use rvrf::rvrf_verify_simple;
 
 #[macro_use]
 extern crate lazy_static;

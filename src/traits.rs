@@ -1,8 +1,6 @@
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-
-
 use sha3::{Digest as Digest2, Keccak256};
 
 // trait
@@ -21,6 +19,7 @@ pub trait ScalarTrait:
     + Sized
 {
     type ScalarType;
+    #[cfg(feature = "prove")]
     fn random_scalar() -> Self;
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
     fn get_self(&self) -> Self;

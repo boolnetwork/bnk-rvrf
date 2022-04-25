@@ -1,6 +1,7 @@
 use crate::traits::{Hash, PointTrait, ScalarTrait, HASH};
 use alloc::vec::Vec;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+#[cfg(feature = "prove")]
 use rand_core::OsRng;
 
 use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
@@ -88,6 +89,7 @@ impl Neg for ScalarSelfDefined {
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
 
+    #[cfg(feature = "prove")]
     fn random_scalar() -> Self {
         let mut csprng = OsRng;
         ScalarSelfDefined {

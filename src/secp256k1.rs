@@ -1,5 +1,6 @@
 use k256::{AffinePoint, FieldBytes};
 use k256::{Scalar};
+#[cfg(feature = "prove")]
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
 
@@ -91,6 +92,7 @@ impl Neg for ScalarSelfDefined {
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
 
+    #[cfg(feature = "prove")]
     fn random_scalar() -> Self {
         let mut csprng = OsRng;
         ScalarSelfDefined {
