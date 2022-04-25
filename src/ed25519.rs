@@ -20,7 +20,7 @@ pub struct PointSelfDefined {
 impl MulAssign<ScalarSelfDefined> for ScalarSelfDefined {
     fn mul_assign(&mut self, rhs: ScalarSelfDefined) {
         *self = ScalarSelfDefined {
-            data: &self.data * &rhs.data,
+            data: self.data * rhs.data,
         };
     }
 }
@@ -28,7 +28,7 @@ impl MulAssign<ScalarSelfDefined> for ScalarSelfDefined {
 impl AddAssign<ScalarSelfDefined> for ScalarSelfDefined {
     fn add_assign(&mut self, rhs: ScalarSelfDefined) {
         *self = ScalarSelfDefined {
-            data: &self.data + &rhs.data,
+            data: self.data + rhs.data,
         };
     }
 }
@@ -104,7 +104,7 @@ impl ScalarTrait for ScalarSelfDefined {
     }
 
     fn get_self(&self) -> Self {
-        self.clone()
+        *self
     }
 
     fn one() -> Self {

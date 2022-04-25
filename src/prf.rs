@@ -1,11 +1,6 @@
+#![allow(clippy::many_single_char_names)]
 use crate::util::Com;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
-use sha3::Sha3_512;
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
-use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1};
-
 use crate::traits::{PointTrait, ScalarTrait};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -179,10 +174,10 @@ impl<S: ScalarTrait, P: PointTrait> PRFPoof<S, P> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::zero_or_one::Verifier;
-    use core::ops::Index;
+    
+    
 
-    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+    use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
     #[test]
     fn p_test() {
         let sk = ScalarSelfDefined::random_scalar();
@@ -195,12 +190,12 @@ mod tests {
         let s_pie = ScalarSelfDefined::random_scalar();
         let t_pie = ScalarSelfDefined::random_scalar();
 
-        let m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
+        let _m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
             .comm
             .point;
-        let m2 = s_pie * u;
-        let y1 = s_pie + sk * x;
-        let y2 = t_pie + t * x;
+        let _m2 = s_pie * u;
+        let _y1 = s_pie + sk * x;
+        let _y2 = t_pie + t * x;
         let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(sk, t)
             .comm
             .point;
@@ -246,8 +241,8 @@ mod tests {
 
     #[test]
     fn curve25519_sk_pk_ed25519_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
-        use ed25519_dalek::Signature;
+        use crate::ed25519::{ScalarSelfDefined};
+        
         use ed25519_dalek::{Keypair, PublicKey, SecretKey};
         use ed25519_dalek::{Signer, Verifier};
 

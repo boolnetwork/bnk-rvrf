@@ -1,5 +1,5 @@
 use p256::{AffinePoint, FieldBytes};
-use p256::{NonZeroScalar, Scalar};
+use p256::{Scalar};
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
 
@@ -8,10 +8,8 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use p256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
 use p256::elliptic_curve::Field;
 use p256::ProjectivePoint;
-use p256::elliptic_curve::group::prime::PrimeCurveAffine;
 
 use alloc::vec::Vec;
-use core::convert::TryFrom;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -114,7 +112,7 @@ impl ScalarTrait for ScalarSelfDefined {
     }
 
     fn get_self(&self) -> Self {
-        self.clone()
+        *self
     }
 
     fn one() -> Self {
@@ -238,9 +236,9 @@ impl SubAssign for PointSelfDefined {
 impl PointTrait for PointSelfDefined {
     //type PointType = Self;
 
-    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
+    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(_input: &T) -> Self {
         PointSelfDefined {
-            data: AffinePoint::default(),//TODO::hash
+            data: AffinePoint::default(), //TODO::hash
         }
     }
 
@@ -251,9 +249,7 @@ impl PointTrait for PointSelfDefined {
     }
 
     fn generator_2() -> Self {
-        PointSelfDefined {
-            data: *BASE_POINT2,
-        }
+        PointSelfDefined { data: *BASE_POINT2 }
     }
 
     fn point_to_bytes(&self) -> Vec<u8> {
@@ -303,13 +299,13 @@ fn scalar_test() {
     let c2 = a - b;
     assert_eq!(c1, c2.data);
 
-    let c1 = - b.data;
-    let c2 = - b;
+    let c1 = -b.data;
+    let c2 = -b;
     assert_eq!(c1, c2.data);
 }
 
 #[test]
-fn point_test(){
+fn point_test() {
     let g = PointSelfDefined::generator();
 
     let a: ScalarSelfDefined = ScalarTrait::random_scalar();
@@ -326,7 +322,7 @@ fn point_test(){
 }
 
 #[test]
-fn point_zero_test(){
+fn point_zero_test() {
     let g = PointSelfDefined::generator();
     let inf_p = PointSelfDefined::default();
 

@@ -3,21 +3,18 @@ use crate::one_out_of_many::*;
 use crate::prf::PRFProver;
 #[cfg(feature = "prove")]
 use crate::util::generate_sks;
-#[cfg(feature = "prove")]
-use crate::util::intermediary_sk;
+
 #[cfg(feature = "prove")]
 use crate::util::{generate_pk, Com};
-#[cfg(feature = "prove")]
-use ed25519_dalek::SecretKey;
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
+
+
 
 use crate::prf::{PRFPoof, PRFVerifier};
-use crate::util::ed25519pubkey_to_ristrettopoint;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
-use ed25519_dalek::PublicKey;
+
+
+
 use serde::{Deserialize, Serialize};
-use zk_utils_test::point_to_bytes;
+
 
 use crate::traits::{PointTrait, ScalarTrait};
 use alloc::vec::Vec;
@@ -51,7 +48,7 @@ pub fn generate_pks<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, 
     amount: u64,
 ) -> Vec<P> {
     let sks = generate_sks::<S, P>(amount);
-    let pk_vec: Vec<P> = sks.into_iter().map(|sk| generate_pk(sk)).collect();
+    let pk_vec: Vec<P> = sks.into_iter().map(generate_pk).collect();
     pk_vec
 }
 
@@ -76,8 +73,8 @@ pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Ou
     let crs = CRS::new(S::random_scalar(), S::random_scalar());
     let sk_witness = sk;
     let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
-    let prover = Prover::new(witness, statement.clone(), crs);
-    let (proof, hash) = prover.prove_return_hash(hash_vec.clone());
+    let prover = Prover::new(witness, statement, crs);
+    let (proof, hash) = prover.prove_return_hash(hash_vec);
     let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_pie, t_pie, u, m1, m2, hash);
     RVRFProof {
         m1,
@@ -109,7 +106,7 @@ pub fn rvrf_verify<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, O
     let (result, hash) = verifier.verify_return_hash(proof, hash_vec);
     let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, S::one(), rr, hash);
 
-    if result == true && proof_prf_result == true {
+    if result && proof_prf_result {
         return true;
     }
     false
@@ -132,14 +129,14 @@ pub fn rvrf_prove_simple<
     let c = Com::<S, P>::commit_scalar_2(secret_key, -r).comm.point;
 
     let pks: Vec<P> = public_keys
-        .clone()
+        
         .into_iter()
         .map(|each| each - c)
         .collect();
     let statement: Statement<S, P> = pks.into();
 
-    let rvrfproof = rvrf_prove(witness, statement.clone(), rand, r, c, secret_key);
-    rvrfproof
+    
+    rvrf_prove(witness, statement, rand, r, c, secret_key)
 }
 
 /// rvrfproof证明  public_keys链上公钥s  rand链上随机数  如果true 返回 v 否则 none
@@ -153,7 +150,7 @@ pub fn rvrf_verify_simple<
 ) -> Option<P> {
     let c = rvrfproof.c;
     let pks: Vec<P> = public_keys
-        .clone()
+        
         .into_iter()
         .map(|each| each - c)
         .collect();
@@ -188,19 +185,17 @@ pub fn rvrf_verify_simple<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::ops::Index;
-    use serde_json;
 
     #[test]
     fn rvrf_bench_simple_test() {
-        use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         for amount in 1..5 {
             let samples = 10;
-            for i in 0..samples {
+            for _i in 0..samples {
                 // 链上的那一组公钥中自己的公钥的index
                 let l = 0;
                 let witness = Witness::<ScalarSelfDefined>::new(l);
-                let r = witness.r;
+                let _r = witness.r;
 
                 // 构造 输入参数
                 // 一组 私钥 sks  （模拟每个人的私钥）
@@ -209,7 +204,7 @@ mod tests {
                 let pk_vec: Vec<PointSelfDefined> = sks
                     .clone()
                     .into_iter()
-                    .map(|sk| generate_pk::<ScalarSelfDefined, PointSelfDefined>(sk))
+                    .map(generate_pk::<ScalarSelfDefined, PointSelfDefined>)
                     .collect();
                 // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
                 let sk_witness = sks[l as usize];

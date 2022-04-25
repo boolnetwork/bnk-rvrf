@@ -1,12 +1,8 @@
+#![allow(clippy::many_single_char_names)]
+
 use crate::util::Com;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
-use zk_utils_test::{hash_to_scalar, point_to_bytes, BASEPOINT_G1, BASEPOINT_G2};
-
 use alloc::vec::Vec;
-
 use crate::traits::{PointTrait, ScalarTrait};
 use core::marker::PhantomData;
 use core::ops::Mul;
@@ -54,13 +50,13 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         Prover {
             crs: CRS::new(m, r),
             m,
-            r: r,
+            r,
         }
     }
 
     pub fn proof_with_a(self) -> (Proof<S, P>, S) {
-        let m = self.m.clone();
-        let r = self.r.clone();
+        let m = self.m;
+        let r = self.r;
         let a = S::random_scalar();
         let s = S::random_scalar();
         let t = S::random_scalar();
@@ -80,7 +76,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
             Proof {
                 ca: ca.comm.point,
                 cb: cb.comm.point,
-                f: f,
+                f,
                 za: r * x + s,
                 zb: r * (x - f) + t,
             },
@@ -90,8 +86,8 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
 
     #[allow(dead_code)]
     pub fn proof(self) -> Proof<S, P> {
-        let m = self.m.clone();
-        let r = self.r.clone();
+        let m = self.m;
+        let r = self.r;
         let a = S::random_scalar();
         let s = S::random_scalar();
         let t = S::random_scalar();
@@ -110,7 +106,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         Proof {
             ca: ca.comm.point,
             cb: cb.comm.point,
-            f: f,
+            f,
             za: r * x + s,
             zb: r * (x - f) + t,
         }
@@ -131,7 +127,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
         hash_vec.append(&mut cb.point_to_bytes());
 
         let x = S::hash_to_scalar(&hash_vec);
-        let c = self.crs.c.clone();
+        let c = self.crs.c;
 
         let left_1 = c * x + ca;
         let right_1 = Com::<S, P>::commit_scalar_2(f, za).comm.point;
@@ -139,11 +135,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
         let left_2 = c * (x - f) + cb;
         let right_2 = Com::<S, P>::commit_scalar_2(S::zero(), zb).comm.point;
 
-        if left_1 == right_1 && left_2 == right_2 {
-            return true;
-        } else {
-            return false;
-        }
+        left_1 == right_1 && left_2 == right_2
     }
 }
 
@@ -151,7 +143,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
 mod tests {
     use super::*;
     use crate::p256::{PointSelfDefined, ScalarSelfDefined};
-    use core::ops::Index;
+    
     use p256::elliptic_curve::sec1::EncodedPoint;
     use p256::AffinePoint;
 
@@ -213,7 +205,7 @@ mod tests {
         let b: PointSelfDefined = PointTrait::generator_2();
         let aa = &EncodedPoint::from((a * b).data);
         let bb = AffinePoint::from_encoded_point(aa).unwrap();
-        let cc = ProjectivePoint::from(bb);
+        let _cc = ProjectivePoint::from(bb);
     }
 
     #[test]

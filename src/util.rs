@@ -1,10 +1,9 @@
 use curve25519_dalek::edwards::CompressedEdwardsY;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use ed25519_dalek::{PublicKey, SecretKey};
 use sha2::{Digest, Sha512};
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
-use zk_utils_test::{hash_to_scalar, BASEPOINT_G1, BASEPOINT_G2};
+
+
 
 use alloc::format;
 use alloc::vec;
@@ -65,7 +64,7 @@ pub fn fix_len_binary(num: u64, max: u64) -> Vec<u64> {
     }
     let mut new = vec![0u64; max_len - raw_len];
     new.append(&mut raw);
-    return new;
+    new
 }
 
 #[derive(Clone, Debug, Default)]
@@ -117,7 +116,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
         }
     }
 
-    pub fn commit_scalar_3(value: S, value2: S) -> Self {
+    pub fn commit_scalar_3(_value: S, value2: S) -> Self {
         let commitment_point = value2 * P::generator_2();
 
         Self {
@@ -135,8 +134,8 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
 pub fn generate_pk<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     sk: S,
 ) -> P {
-    let commitment_point = sk * P::generator();
-    commitment_point
+    
+    sk * P::generator()
 }
 
 #[cfg(feature = "prove")]
@@ -178,10 +177,10 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+    use crate::p256::{ScalarSelfDefined};
     #[test]
     fn number_to_binary_test() {
-        let a = number_to_binary(50);
+        let _a = number_to_binary(50);
     }
 
     #[test]

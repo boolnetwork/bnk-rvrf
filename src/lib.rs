@@ -1,4 +1,7 @@
 #![no_std]
+#![allow(clippy::all)]
+#![allow(warnings)]
+
 pub extern crate alloc;
 
 mod one_out_of_many;
@@ -24,7 +27,7 @@ extern crate lazy_static;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     #[test]
     fn protocol_test() {}
 }

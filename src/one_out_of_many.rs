@@ -9,11 +9,10 @@ use polynomials::*;
 use crate::util::{fix_len_binary, number_to_binary};
 use crate::util::{x_pow_n, Com};
 use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "prove")]
-use zk_utils_test::get_random_scalar;
-use zk_utils_test::{hash_to_scalar, point_to_bytes};
+
+
 
 #[cfg(feature = "prove")]
 use alloc::vec;
@@ -120,7 +119,7 @@ impl<S: ScalarTrait> Witness<S> {
     pub fn new(l: u64) -> Self {
         Self {
             sk: S::zero(),
-            l: l,
+            l,
             r: S::random_scalar(),
         }
     }
@@ -135,8 +134,6 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
             crs,
         }
     }
-
-    pub fn new_2() {}
 
     pub fn proof_zero_or_one(l: Vec<u64>) -> (Vec<ZoproofCrs<S, P>>, Vec<S>) {
         let mut zo_proofs = Vec::new();
@@ -154,12 +151,12 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
     }
 
     pub fn prove(self, extra_x: Vec<Vec<u8>>) -> Proof<S, P> {
-        let CRS { c: _, .. } = self.crs.clone();
+        let CRS { c: _, .. } = self.crs;
         let Statement {
             pk_vec: ci_vec_comm,
             ..
         } = self.statement.clone();
-        let Witness { sk: _, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness;
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -198,7 +195,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             for i in 0..number_of_public_keys as usize {
-                let cdk = ci_vec_comm[i].clone() * *p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
+                let cdk = ci_vec_comm[i] * *p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
             }
         }
@@ -244,18 +241,18 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
             clj: vec![],
             fj: fj_vec,
             cdk: cdk_add_vec,
-            zd: zd,
+            zd,
             zoproof: zero_one_proof,
         }
     }
 
     pub fn prove_return_hash(self, extra_x: Vec<Vec<u8>>) -> (Proof<S, P>, S) {
-        let CRS { c: _, .. } = self.crs.clone();
+        let CRS { c: _, .. } = self.crs;
         let Statement {
             pk_vec: ci_vec_comm,
             ..
         } = self.statement.clone();
-        let Witness { sk: _, l, r } = self.witness.clone();
+        let Witness { sk: _, l, r } = self.witness;
 
         let number_of_public_keys = ci_vec_comm.len() as u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -294,7 +291,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             for i in 0..number_of_public_keys as usize {
-                let cdk = ci_vec_comm[i].clone() * *p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
+                let cdk = ci_vec_comm[i] * *p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
             }
         }
@@ -341,7 +338,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
                 clj: vec![],
                 fj: fj_vec,
                 cdk: cdk_add_vec,
-                zd: zd,
+                zd,
                 zoproof: zero_one_proof,
             },
             x,
@@ -367,11 +364,11 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
     }
 
     pub fn verify(self, proof: Proof<S, P>, extra_x: Vec<Vec<u8>>) -> bool {
-        let CRS { c: _, .. } = self.crs.clone();
+        let CRS { c: _, .. } = self.crs;
         let Statement {
             pk_vec: ci_vec_comm,
             ..
-        } = self.statement.clone();
+        } = self.statement;
         let Proof {
             clj: _,
             fj: fj_vec,
@@ -380,7 +377,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
             zoproof,
         } = proof;
 
-        if Self::verify_zero_or_one(zoproof.clone()) == false {
+        if !Self::verify_zero_or_one(zoproof.clone()) {
             return false;
         }
 
@@ -430,19 +427,15 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
         let left = ci_pow_fji_2 + cd_k_xk;
         let right = Com::commit_scalar_2(S::zero(), zd);
 
-        if left == right.comm.point {
-            return true;
-        } else {
-            return false;
-        }
+        left == right.comm.point
     }
 
     pub fn verify_return_hash(self, proof: Proof<S, P>, extra_x: Vec<Vec<u8>>) -> (bool, S) {
-        let CRS { c: _, .. } = self.crs.clone();
+        let CRS { c: _, .. } = self.crs;
         let Statement {
             pk_vec: ci_vec_comm,
             ..
-        } = self.statement.clone();
+        } = self.statement;
         let Proof {
             clj: _,
             fj: fj_vec,
@@ -451,7 +444,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
             zoproof,
         } = proof;
 
-        if Self::verify_zero_or_one(zoproof.clone()) == false {
+        if !Self::verify_zero_or_one(zoproof.clone()) {
             return (false, S::zero());
         }
 
@@ -502,9 +495,9 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
         let right = Com::commit_scalar_2(S::zero(), zd);
 
         if left == right.comm.point {
-            return (true, x);
+            (true, x)
         } else {
-            return (false, x);
+            (false, x)
         }
     }
 }
@@ -565,7 +558,7 @@ mod tests {
     //
     #[test]
     fn poly_test() {
-        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::p256::{ScalarSelfDefined};
         use polynomials::*;
 
         let a = poly![
@@ -577,7 +570,7 @@ mod tests {
             ScalarSelfDefined::random_scalar()
         ];
 
-        let c = a * b;
+        let _c = a * b;
 
         // (x + 1)(2x + 3)(1)(1)(1) = 2x^2 + 5x + 3
         let a = poly![
@@ -608,12 +601,12 @@ mod tests {
         let b = poly![3, 9]; // 3x+9  9x+3
         let c = a * b;
         let result_eval = c.eval(x).unwrap();
-        let mut coeff: Vec<u64> = c.into();
+        let coeff: Vec<u64> = c.into();
         let len = coeff.len();
         let mut result_coeff = coeff[0] * 1u64;
         for i in 1..len {
             let mut tmp_x = 1u64;
-            for bb in 0..i {
+            for _bb in 0..i {
                 tmp_x *= x;
             }
             result_coeff += coeff[i] * tmp_x;
@@ -643,10 +636,10 @@ mod tests {
         let mut tj_vec: Vec<ScalarSelfDefined> = Vec::new();
         let mut rouk_vec: Vec<ScalarSelfDefined> = Vec::new();
 
-        let mut clj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut caj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut cbj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut cdk_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let _clj_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let _caj_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let _cbj_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let _cdk_vec: Vec<ScalarSelfDefined> = Vec::new();
 
         for j in 0..binary_j_vec_len {
             let rj = ScalarSelfDefined::random_scalar();
@@ -659,12 +652,12 @@ mod tests {
             tj_vec.push(tj);
             let rouk = ScalarSelfDefined::random_scalar();
             rouk_vec.push(rouk);
-            let clj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+            let _clj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
                 ScalarSelfDefined::from_u64(l_vec[j as usize]),
                 rj,
             );
-            let caj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(aj, sj);
-            let cbj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+            let _caj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(aj, sj);
+            let _cbj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
                 ScalarSelfDefined::from_u64(l_vec[j as usize]) * aj,
                 tj,
             );
@@ -691,12 +684,12 @@ mod tests {
                 f_j_ij_mul *= f_j_ij;
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
-            let mut coefficients: Vec<ScalarSelfDefined> = f_j_ij_mul.into();
+            let coefficients: Vec<ScalarSelfDefined> = f_j_ij_mul.into();
             //coefficients.reverse();
             //println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             p_i_k.push(coefficients);
         }
-        let test = p_i_k.index(4).index(1);
+        let _test = p_i_k.index(4).index(1);
         //println!("test coefficients(X^n+...+x^0) = {:?}", test);
 
         let x = ScalarSelfDefined::random_scalar();
@@ -711,14 +704,14 @@ mod tests {
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let fj = ScalarSelfDefined::from_u64(l_vec[j]) * x + aj_vec[j];
-            let zaj = rj_vec[j] * x + sj_vec[j];
-            let zbj = rj_vec[j] * (x - fj) + tj_vec[j];
-            let com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
+            let _zaj = rj_vec[j] * x + sj_vec[j];
+            let _zbj = rj_vec[j] * (x - fj) + tj_vec[j];
+            let _com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
                 ScalarSelfDefined::zero(),
                 rouk_vec[j],
             );
             for i in 0..number_of_public_keys as usize {
-                let cdk = ci_vec_comm[i].comm.point.clone() * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
+                let cdk = ci_vec_comm[i].comm.point * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
             }
         }
@@ -740,9 +733,9 @@ mod tests {
 
         // 直接计算 fji带入方程
         let mut ci_pow_fji =
-            ci_vec_comm[0].comm.point.clone() * f_i_j_poly.index(0).eval(x).unwrap();
+            ci_vec_comm[0].comm.point * f_i_j_poly.index(0).eval(x).unwrap();
         for i in 1..number_of_public_keys as usize {
-            ci_pow_fji += ci_vec_comm[i].comm.point.clone() * f_i_j_poly.index(i).eval(x).unwrap();
+            ci_pow_fji += ci_vec_comm[i].comm.point * f_i_j_poly.index(i).eval(x).unwrap();
         }
         //println!("ci_pow_fji = {:?}", ci_pow_fji);
         // lj aj 来组成 fj
@@ -775,7 +768,7 @@ mod tests {
         for j in 1..(binary_j_vec_len + 1) as usize {
             bbb += *p_i_k.index(4).index(j) * x_pow_n(x, j as u64);
         }
-        let ccc = f_i_j_poly.index(4).eval(x).unwrap();
+        let _ccc = f_i_j_poly.index(4).eval(x).unwrap();
         //println!("bbbccc = {:?}", bbb);
         //println!("bbbccc = {:?}", ccc);
         //
@@ -783,12 +776,12 @@ mod tests {
         let mut xxxx = PointSelfDefined::default();
         for i in 0..number_of_public_keys as usize {
             for j in 0..binary_j_vec_len as usize {
-                xxxx += ci_vec_comm[i].comm.point.clone()
+                xxxx += ci_vec_comm[i].comm.point
                     * p_i_k.index(i).index(j)
                     * x_pow_n(x, j as u64);
             }
         }
-        xxxx += ci_vec_comm[5].comm.point.clone() * x_pow_n(x, binary_j_vec_len + 1);
+        xxxx += ci_vec_comm[5].comm.point * x_pow_n(x, binary_j_vec_len + 1);
         xxxx -= PointSelfDefined::default();
         //println!("xxxx = {:?}", xxxx);
 
