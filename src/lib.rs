@@ -11,9 +11,9 @@ mod traits;
 mod util;
 mod zero_or_one;
 
-mod ed25519;
-mod p256;
-mod secp256k1;
+pub mod ed25519;
+pub mod p256;
+pub mod secp256k1;
 
 // pub use one_out_of_many::{Prover, Verifier};
 // pub use prf::{PRFProver, PRFVerifier};
