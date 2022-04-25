@@ -6,7 +6,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zk-utils-test = { git = "https://github.com/ABMatrix/zk-utils-test.git", branch = "wasm", default-features = false}
 curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", version = "*", default-features = false, features = ["serde", "alloc", "u64_backend"]}
 sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
@@ -16,12 +15,6 @@ ed25519-dalek = { version = "1.0.0", default-features = false, features = ["rand
 sha2 = { version = "0.9.1", default-features = false }
 p256 = { version = "0.8", default-features = false, features = ["ecdsa"] }
 k256 = { version = "0.8", default-features = false, features = ["ecdsa"] }
-
-#curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false, features = ["num-bigint"] }
-#
-#[dependencies.libsecp256k1]
-#git  = "https://github.com/sgx-test/libsecp256k1-sgx"
-#branch = "0.3.5-sgx-struct"
 
 [dependencies.lazy_static]
 version = "1.4.0"
@@ -43,4 +36,4 @@ ed25519-dalek = "1"
 [features]
 default = ["std"]
 std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "polynomials/std", "prove"]
-prove = ["zk-utils-test/std"]
+prove = []
