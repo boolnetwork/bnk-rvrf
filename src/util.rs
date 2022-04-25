@@ -1,13 +1,10 @@
+use alloc::format;
+use alloc::vec;
+pub use alloc::vec::Vec;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
 use ed25519_dalek::{PublicKey, SecretKey};
 use sha2::{Digest, Sha512};
-
-
-
-use alloc::format;
-use alloc::vec;
-pub use alloc::vec::Vec;
 
 use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
@@ -134,7 +131,6 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
 pub fn generate_pk<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     sk: S,
 ) -> P {
-    
     sk * P::generator()
 }
 
@@ -177,7 +173,7 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::p256::{ScalarSelfDefined};
+    use crate::p256::ScalarSelfDefined;
     #[test]
     fn number_to_binary_test() {
         let _a = number_to_binary(50);

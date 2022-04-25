@@ -7,14 +7,9 @@ use crate::util::generate_sks;
 #[cfg(feature = "prove")]
 use crate::util::{generate_pk, Com};
 
-
-
 use crate::prf::{PRFPoof, PRFVerifier};
 
-
-
 use serde::{Deserialize, Serialize};
-
 
 use crate::traits::{PointTrait, ScalarTrait};
 use alloc::vec::Vec;
@@ -128,14 +123,9 @@ pub fn rvrf_prove_simple<
     let r = witness.r;
     let c = Com::<S, P>::commit_scalar_2(secret_key, -r).comm.point;
 
-    let pks: Vec<P> = public_keys
-        
-        .into_iter()
-        .map(|each| each - c)
-        .collect();
+    let pks: Vec<P> = public_keys.into_iter().map(|each| each - c).collect();
     let statement: Statement<S, P> = pks.into();
 
-    
     rvrf_prove(witness, statement, rand, r, c, secret_key)
 }
 
@@ -149,11 +139,7 @@ pub fn rvrf_verify_simple<
     rand: S,
 ) -> Option<P> {
     let c = rvrfproof.c;
-    let pks: Vec<P> = public_keys
-        
-        .into_iter()
-        .map(|each| each - c)
-        .collect();
+    let pks: Vec<P> = public_keys.into_iter().map(|each| each - c).collect();
     let statement: Statement<S, P> = pks.into();
 
     match rvrf_verify(rvrfproof.clone(), statement, rand) {
@@ -188,7 +174,7 @@ mod tests {
 
     #[test]
     fn rvrf_bench_simple_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
         for amount in 1..5 {
             let samples = 10;
             for _i in 0..samples {

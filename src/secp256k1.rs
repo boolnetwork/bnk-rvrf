@@ -1,15 +1,15 @@
+use k256::Scalar;
 use k256::{AffinePoint, FieldBytes};
-use k256::{Scalar};
 #[cfg(feature = "prove")]
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
 
 use crate::traits::{Hash, PointTrait, ScalarTrait, HASH};
+use alloc::vec::Vec;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use k256::elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint};
 use k256::elliptic_curve::Field;
 use k256::ProjectivePoint;
-use alloc::vec::Vec;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -234,9 +234,14 @@ impl SubAssign for PointSelfDefined {
 impl PointTrait for PointSelfDefined {
     //type PointType = Self;
 
-    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(_input: &T) -> Self {
+    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
+        let mut array = [0; 32];
+        array.clone_from_slice(&HASH.hash(input));
+        let mut bytes = FieldBytes::default();
+        bytes.copy_from_slice(&array.as_ref());
+        let scalar = Scalar::from_bytes_reduced(&bytes);
         PointSelfDefined {
-            data: AffinePoint::default(), //TODO::hash
+            data: (ProjectivePoint::from(AffinePoint::generator()) * scalar).to_affine(), //TODO::hash
         }
     }
 

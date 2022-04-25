@@ -40,13 +40,12 @@ pub trait PointTrait:
     + Default
     + PartialEq
     + Debug
-    + Sized //+ Mul<dyn ScalarTrait>
+    + Sized
 {
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self;
     fn generator() -> Self;
     fn generator_2() -> Self;
     fn point_to_bytes(&self) -> Vec<u8>;
-    // fn default() -> Self;
 }
 
 /// Trait of a replaceable hash algorithm.

@@ -1,11 +1,11 @@
 #![allow(clippy::many_single_char_names)]
 
-use crate::util::Com;
-use serde::{Deserialize, Serialize};
-use alloc::vec::Vec;
 use crate::traits::{PointTrait, ScalarTrait};
+use crate::util::Com;
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 use core::ops::Mul;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CRS<S: ScalarTrait, P: PointTrait> {
@@ -143,7 +143,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
 mod tests {
     use super::*;
     use crate::p256::{PointSelfDefined, ScalarSelfDefined};
-    
+
     use p256::elliptic_curve::sec1::EncodedPoint;
     use p256::AffinePoint;
 

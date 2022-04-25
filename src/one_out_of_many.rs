@@ -12,8 +12,6 @@ use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS}
 
 use serde::{Deserialize, Serialize};
 
-
-
 #[cfg(feature = "prove")]
 use alloc::vec;
 pub use alloc::vec::Vec;
@@ -558,7 +556,7 @@ mod tests {
     //
     #[test]
     fn poly_test() {
-        use crate::p256::{ScalarSelfDefined};
+        use crate::p256::ScalarSelfDefined;
         use polynomials::*;
 
         let a = poly![
@@ -732,8 +730,7 @@ mod tests {
         }
 
         // 直接计算 fji带入方程
-        let mut ci_pow_fji =
-            ci_vec_comm[0].comm.point * f_i_j_poly.index(0).eval(x).unwrap();
+        let mut ci_pow_fji = ci_vec_comm[0].comm.point * f_i_j_poly.index(0).eval(x).unwrap();
         for i in 1..number_of_public_keys as usize {
             ci_pow_fji += ci_vec_comm[i].comm.point * f_i_j_poly.index(i).eval(x).unwrap();
         }
@@ -776,9 +773,7 @@ mod tests {
         let mut xxxx = PointSelfDefined::default();
         for i in 0..number_of_public_keys as usize {
             for j in 0..binary_j_vec_len as usize {
-                xxxx += ci_vec_comm[i].comm.point
-                    * p_i_k.index(i).index(j)
-                    * x_pow_n(x, j as u64);
+                xxxx += ci_vec_comm[i].comm.point * p_i_k.index(i).index(j) * x_pow_n(x, j as u64);
             }
         }
         xxxx += ci_vec_comm[5].comm.point * x_pow_n(x, binary_j_vec_len + 1);

@@ -1,10 +1,10 @@
 #![allow(clippy::many_single_char_names)]
-use crate::util::Com;
-use serde::{Deserialize, Serialize};
 use crate::traits::{PointTrait, ScalarTrait};
+use crate::util::Com;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use core::ops::Mul;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRS<S: ScalarTrait, P: PointTrait> {
@@ -174,8 +174,6 @@ impl<S: ScalarTrait, P: PointTrait> PRFPoof<S, P> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
-    
 
     use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
     #[test]
@@ -241,8 +239,8 @@ mod tests {
 
     #[test]
     fn curve25519_sk_pk_ed25519_test() {
-        use crate::ed25519::{ScalarSelfDefined};
-        
+        use crate::ed25519::ScalarSelfDefined;
+
         use ed25519_dalek::{Keypair, PublicKey, SecretKey};
         use ed25519_dalek::{Signer, Verifier};
 

@@ -1,5 +1,5 @@
+use p256::Scalar;
 use p256::{AffinePoint, FieldBytes};
-use p256::{Scalar};
 #[cfg(feature = "prove")]
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
@@ -236,11 +236,14 @@ impl SubAssign for PointSelfDefined {
 }
 
 impl PointTrait for PointSelfDefined {
-    //type PointType = Self;
-
-    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(_input: &T) -> Self {
+    fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
+        let mut array = [0; 32];
+        array.clone_from_slice(&HASH.hash(input));
+        let mut bytes = FieldBytes::default();
+        bytes.copy_from_slice(&array.as_ref());
+        let scalar = Scalar::from_bytes_reduced(&bytes);
         PointSelfDefined {
-            data: AffinePoint::default(), //TODO::hash
+            data: (ProjectivePoint::from(AffinePoint::generator()) * scalar).to_affine(),
         }
     }
 

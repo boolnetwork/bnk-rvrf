@@ -24,7 +24,7 @@ extern crate lazy_static;
 
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
     fn protocol_test() {}
 }
