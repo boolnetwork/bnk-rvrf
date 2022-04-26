@@ -87,7 +87,7 @@ dependencies = [
 [[package]]
 name = "curve25519-dalek"
 version = "2.1.3"
-source = "git+https://github.com/ABMatrix/curve25519-dalek.git?branch=pub#de708598e01ca9d2aad3870fbca2d7ce358d5917"
+source = "git+https://github.com/ABMatrix/curve25519-dalek.git?branch=pub#e12504f3aa588c83fe1652226aa1ba9b14d226a5"
 dependencies = [
  "byteorder",
  "digest 0.8.1",

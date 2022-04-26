@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn rvrf_bench_simple_test() {
-        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         for amount in 1..5 {
             let samples = 10;
             for _i in 0..samples {
