@@ -228,7 +228,6 @@ mod tests {
                     .clone()
                     .into_iter()
                     .map(|sk| {
-                        let sk = Secret::random();
                         let pk: Public = sk.into();
                         pk
                     })
@@ -245,21 +244,4 @@ mod tests {
             }
         }
     }
-
-    // #[test]
-    // fn ooom_test() {
-    //     let l = 6;
-    //     let witness = Witness::new(l);
-    //     let r = witness.r;
-    //     let amount = 8;
-    //     let statment = Statement::new(amount, l, r);
-    //     let crs = CRS::new(get_random_scalar(), r);
-    //
-    //     let prover = Prover::new(witness, statment.clone(), crs);
-    //     let proof = prover.prove(vec![]);
-    //
-    //     let verifier = Verifier::new(statment, crs);
-    //     let result = verifier.verify(proof, vec![]);
-    //     assert_eq!(result, true);
-    // }
 }

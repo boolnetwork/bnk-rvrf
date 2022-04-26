@@ -543,18 +543,7 @@ mod tests {
         let result = verifier.verify(proof, vec![]);
         assert_eq!(result, true);
     }
-    //
-    // #[test]
-    // fn generate_sks_test() {
-    //     let a = generate_sks(10);
-    // }
-    //
-    // #[test]
-    // fn commit_sks_test() {
-    //     let a = generate_sks(10);
-    //     let b: Vec<Com> = a.into_iter().map(|sk| Com::commit_scalar(sk)).collect();
-    // }
-    //
+
     #[cfg(feature = "pk256")]
     #[test]
     fn poly_test() {

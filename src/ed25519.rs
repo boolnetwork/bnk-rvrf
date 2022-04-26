@@ -18,6 +18,14 @@ pub struct ScalarSelfDefined {
     pub data: Scalar,
 }
 
+impl ScalarSelfDefined {
+    pub fn from_bytes(bytes: &[u8]) -> Result<ScalarSelfDefined, String> {
+        Ok(ScalarSelfDefined {
+            data: Secret::from_bytes(bytes)?.0,
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct PointSelfDefined {
     pub data: RistrettoPoint,

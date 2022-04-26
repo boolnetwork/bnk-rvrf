@@ -1,51 +1,11 @@
 use alloc::format;
 use alloc::vec;
 pub use alloc::vec::Vec;
-use curve25519_dalek::edwards::CompressedEdwardsY;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
-#[cfg(feature = "edkey")]
-use ed25519_dalek::{PublicKey, SecretKey};
+
 use sha2::{Digest, Sha512};
 
 use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
-
-#[cfg(feature = "edkey")]
-pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
-    let pubkeys: Vec<RistrettoPoint> = public_keys
-        .into_iter()
-        .map(|pubkey| {
-            let compressed = CompressedEdwardsY {
-                0: pubkey.to_bytes(),
-            };
-            let edwards = compressed.decompress().unwrap();
-            RistrettoPoint { 0: edwards }
-        })
-        .collect();
-    pubkeys
-}
-
-#[cfg(feature = "edkey")]
-pub fn intermediary_sk(secret_key: &SecretKey) -> Scalar {
-    let mut h: Sha512 = Sha512::new();
-    let mut hash: [u8; 64] = [0u8; 64];
-    let mut digest: [u8; 32] = [0u8; 32];
-
-    h.update(secret_key.as_bytes());
-    hash.copy_from_slice(h.finalize().as_slice());
-
-    digest.copy_from_slice(&hash[..32]);
-
-    mangle_scalar_bits(&mut digest)
-}
-
-fn mangle_scalar_bits(bits: &mut [u8; 32]) -> Scalar {
-    bits[0] &= 248;
-    bits[31] &= 127;
-    bits[31] |= 64;
-
-    Scalar::from_bits(*bits)
-}
 
 pub fn number_to_binary(num: u64) -> Vec<u64> {
     let binary: Vec<u64> = format!("{:b}", num)
