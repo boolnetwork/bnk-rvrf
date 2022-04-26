@@ -6,7 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", version = "*", default-features = false, features = ["serde", "alloc", "u64_backend"]}
+curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", default-features = false, features = ["serde", "alloc", "u64_backend"]}
 sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
@@ -16,6 +16,8 @@ ed25519-dalek = { version = "1.0.0", default-features = false, features = ["rand
 p256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 k256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 #curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false }
+
+rand_sgx = { package = "rand_core", git = "https://github.com/mesalock-linux/rand-sgx", default-features = false , optional = true }
 
 [dependencies.lazy_static]
 version = "1.4.0"
@@ -35,10 +37,20 @@ optional = true
 
 [dev-dependencies]
 ed25519-dalek = "1"
+#[cfg(feature = "std-rand")]
 
 [features]
 default = ["std", "pk256", "edkey"]
 std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "polynomials/std", "prove"]
-prove = ["rand", "rand_core"]
-pk256 = ["p256", "k256"]
-edkey = ["ed25519-dalek"]
+
+std-prove = ["prove","std-rand"] # prove std-rand
+sgx-prove = ["prove","sgx-rand"]
+
+prove = []
+std-rand = ["rand", "rand_core"]
+
+pk256 = ["p256", "k256"]  # + p256 +k256
+
+edkey = ["ed25519-dalek"]  # + ed25519-dalek
+
+sgx-rand = ["rand_sgx"]

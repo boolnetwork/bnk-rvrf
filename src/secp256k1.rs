@@ -1,6 +1,6 @@
 use k256::Scalar;
 use k256::{AffinePoint, FieldBytes};
-#[cfg(feature = "prove")]
+#[cfg(feature = "std-rand")]
 //use rand_core::OsRng;
 use rand::rngs::OsRng;
 
