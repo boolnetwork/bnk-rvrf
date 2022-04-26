@@ -9,6 +9,7 @@ use sha2::{Digest, Sha512};
 
 use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
+
 #[cfg(feature = "edkey")]
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
     let pubkeys: Vec<RistrettoPoint> = public_keys
@@ -23,6 +24,7 @@ pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<Ristr
         .collect();
     pubkeys
 }
+
 #[cfg(feature = "edkey")]
 pub fn intermediary_sk(secret_key: &SecretKey) -> Scalar {
     let mut h: Sha512 = Sha512::new();

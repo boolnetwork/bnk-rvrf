@@ -198,18 +198,19 @@ mod tests {
         assert_eq!(left_2, right_2);
     }
 
-    #[cfg(feature = "pk256")]
-    #[test]
-    fn zero_test() {
-        use p256::elliptic_curve::sec1::FromEncodedPoint;
-        use p256::ProjectivePoint;
-
-        let a: ScalarSelfDefined = ScalarTrait::zero();
-        let b: PointSelfDefined = PointTrait::generator_2();
-        let aa = &EncodedPoint::from((a * b).data);
-        let bb = AffinePoint::from_encoded_point(aa).unwrap();
-        let _cc = ProjectivePoint::from(bb);
-    }
+    // #[cfg(feature = "pk256")]
+    // #[ignore]
+    // #[test]
+    // fn zero_test() {
+    //     use p256::elliptic_curve::sec1::FromEncodedPoint;
+    //     use p256::ProjectivePoint;
+    //
+    //     let a: ScalarSelfDefined = ScalarTrait::zero();
+    //     let b: PointSelfDefined = PointTrait::generator_2();
+    //     let aa = &EncodedPoint::from((a * b).data);
+    //     let bb = AffinePoint::from_encoded_point(aa).unwrap();
+    //     let _cc = ProjectivePoint::from(bb);
+    // }
 
     #[cfg(feature = "pk256")]
     #[test]

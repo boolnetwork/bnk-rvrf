@@ -616,7 +616,7 @@ mod tests {
 
     #[test]
     fn a_test() {
-        use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         //use crate::p256::{PointSelfDefined, ScalarSelfDefined};
 
         let number_of_public_keys = 10u64;
