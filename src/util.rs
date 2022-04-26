@@ -3,12 +3,13 @@ use alloc::vec;
 pub use alloc::vec::Vec;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+#[cfg(feature = "edkey")]
 use ed25519_dalek::{PublicKey, SecretKey};
 use sha2::{Digest, Sha512};
 
 use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
-
+#[cfg(feature = "edkey")]
 pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<RistrettoPoint> {
     let pubkeys: Vec<RistrettoPoint> = public_keys
         .into_iter()
@@ -22,6 +23,7 @@ pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<PublicKey>) -> Vec<Ristr
         .collect();
     pubkeys
 }
+#[cfg(feature = "edkey")]
 pub fn intermediary_sk(secret_key: &SecretKey) -> Scalar {
     let mut h: Sha512 = Sha512::new();
     let mut hash: [u8; 64] = [0u8; 64];
