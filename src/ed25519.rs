@@ -4,13 +4,13 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "std-rand")]
 use rand_core::OsRng;
 
-use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, constants};
-use sha3::Sha3_512;
-use sha2::{Sha512, Digest};
-use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
 use crate::alloc::string::{String, ToString};
 use core::convert::{TryFrom, TryInto};
+use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
+use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
+use curve25519_dalek::{constants, ristretto::RistrettoPoint, scalar::Scalar};
+use sha2::{Digest, Sha512};
+use sha3::Sha3_512;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -109,9 +109,7 @@ impl ScalarTrait for ScalarSelfDefined {
         let mut scalar_bytes = [0u8; 64];
         csprng.fill_bytes(&mut scalar_bytes);
         let res = Scalar::from_bytes_mod_order_wide(&scalar_bytes);
-        ScalarSelfDefined {
-            data: res,
-        }
+        ScalarSelfDefined { data: res }
     }
 
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
@@ -262,6 +260,42 @@ impl PointTrait for PointSelfDefined {
     }
 }
 
+// =============================================================//
+pub fn ed25519pubkey_to_ristrettopoint(public_keys: Vec<Public>) -> Vec<PointSelfDefined> {
+    let pubkeys: Vec<PointSelfDefined> = public_keys
+        .into_iter()
+        .map(|pubkey| PointSelfDefined {
+            data: RistrettoPoint { 0: pubkey.0 .0 },
+        })
+        .collect();
+    pubkeys
+}
+
+pub fn intermediary_sk(secret_key: &Secret) -> ScalarSelfDefined {
+    let mut h: Sha512 = Sha512::new();
+    let mut hash: [u8; 64] = [0u8; 64];
+    let mut digest: [u8; 32] = [0u8; 32];
+
+    h.update(secret_key.0.as_bytes());
+    hash.copy_from_slice(h.finalize().as_slice());
+
+    digest.copy_from_slice(&hash[..32]);
+
+    ScalarSelfDefined {
+        data: mangle_scalar_bits(&mut digest),
+    }
+}
+
+fn mangle_scalar_bits(bits: &mut [u8; 32]) -> Scalar {
+    bits[0] &= 248;
+    bits[31] &= 127;
+    bits[31] |= 64;
+
+    Scalar::from_bits(*bits)
+}
+
+//====================================================================//
+
 pub const SIGNATURE_LENGTH: usize = 64;
 #[derive(Copy, Clone)]
 pub struct Secret(pub Scalar);
@@ -270,20 +304,23 @@ pub struct Secret(pub Scalar);
 pub struct Public(pub RistrettoPoint);
 
 #[derive(Copy, Clone)]
-pub struct Keypair{
+pub struct Keypair {
     pub secret: Secret,
     pub public: Public,
 }
 
-impl Keypair{
-    pub fn new() -> Self{
+impl Keypair {
+    pub fn new() -> Self {
         let sk = Secret::random();
-        let pk:Public = sk.into();
-        Keypair{ secret: sk, public: pk }
+        let pk: Public = sk.into();
+        Keypair {
+            secret: sk,
+            public: pk,
+        }
     }
 }
 #[derive(Copy, Clone)]
-pub struct Signature(pub [u8;SIGNATURE_LENGTH]);
+pub struct Signature(pub [u8; SIGNATURE_LENGTH]);
 
 impl Signature {
     pub fn as_bytes(&self) -> &[u8] {
@@ -318,7 +355,7 @@ impl InternalSignature {
     #[inline]
     pub fn from_bytes(bytes: &[u8]) -> Result<InternalSignature, String> {
         if bytes.len() != SIGNATURE_LENGTH {
-            return Err( "signature lenth".to_string());
+            return Err("signature lenth".to_string());
         }
         let mut lower: [u8; 32] = [0u8; 32];
         let mut upper: [u8; 32] = [0u8; 32];
@@ -329,7 +366,7 @@ impl InternalSignature {
         let s: Scalar;
 
         match check_scalar(upper) {
-            Ok(x)  => s = x,
+            Ok(x) => s = x,
             Err(x) => return Err(x),
         }
 
@@ -358,7 +395,6 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
     type Error = String;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, String> {
-
         if bytes.len() != SIGNATURE_LENGTH {
             return Err("error".to_string());
         }
@@ -373,7 +409,7 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
     }
 }
 
-impl ExpandedSecretKey{
+impl ExpandedSecretKey {
     pub fn sign(&self, message: &[u8], public_key: &Public) -> Signature {
         let mut h: Sha512 = Sha512::new();
         let R: CompressedEdwardsY;
@@ -406,10 +442,9 @@ impl ExpandedSecretKey{
 }
 
 impl<'a> From<&'a Secret> for ExpandedSecretKey {
-
     fn from(secret_key: &'a Secret) -> ExpandedSecretKey {
         let mut h: Sha512 = Sha512::default();
-        let mut hash:  [u8; 64] = [0u8; 64];
+        let mut hash: [u8; 64] = [0u8; 64];
         let mut lower: [u8; 32] = [0u8; 32];
         let mut upper: [u8; 32] = [0u8; 32];
 
@@ -419,24 +454,27 @@ impl<'a> From<&'a Secret> for ExpandedSecretKey {
         lower.copy_from_slice(&hash[00..32]);
         upper.copy_from_slice(&hash[32..64]);
 
-        lower[0]  &= 248;
-        lower[31] &=  63;
-        lower[31] |=  64;
+        lower[0] &= 248;
+        lower[31] &= 63;
+        lower[31] |= 64;
 
-        ExpandedSecretKey{ key: Scalar::from_bits(lower), nonce: upper, }
+        ExpandedSecretKey {
+            key: Scalar::from_bits(lower),
+            nonce: upper,
+        }
     }
 }
 
 impl Secret {
     pub fn random() -> Self {
-        Secret{
-            0: ScalarSelfDefined::random_scalar().data
+        Secret {
+            0: ScalarSelfDefined::random_scalar().data,
         }
     }
 }
 
-impl Keypair{
-    pub fn sign(&self,message:&[u8]) -> Result<Signature, String>{
+impl Keypair {
+    pub fn sign(&self, message: &[u8]) -> Result<Signature, String> {
         let expanded: ExpandedSecretKey = (&self.secret).into();
         Ok(expanded.sign(&message, &self.public).into())
     }
@@ -448,18 +486,13 @@ impl Keypair{
 
 impl Public {
     #[allow(non_snake_case)]
-    fn verify(
-        &self,
-        message: &[u8],
-        signature: &Signature
-    ) -> Result<(), String>
-    {
+    fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), String> {
         let signature = InternalSignature::try_from(signature)?;
 
         let mut h: Sha512 = Sha512::new();
         let R: EdwardsPoint;
         let k: Scalar;
-        let minus_A: EdwardsPoint = -self.0.0;
+        let minus_A: EdwardsPoint = -self.0 .0;
 
         h.update(signature.R.as_bytes());
         h.update(self.0.compress().as_bytes());
@@ -479,7 +512,7 @@ impl Public {
     }
 }
 
-impl From<Secret> for Public{
+impl From<Secret> for Public {
     fn from(s: Secret) -> Self {
         let mut h: Sha512 = Sha512::new();
         let mut hash: [u8; 64] = [0u8; 64];
@@ -508,34 +541,34 @@ fn mangle_scalar_bits_and_multiply_by_basepoint_to_produce_public_key(
 
 fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
     if bytes[31] & 240 == 0 {
-        return Ok(Scalar::from_bits(bytes))
+        return Ok(Scalar::from_bits(bytes));
     }
 
     match Scalar::from_canonical_bytes(bytes) {
-        None => return Err( "ScalarFormatError".to_string()),
+        None => return Err("ScalarFormatError".to_string()),
         Some(x) => return Ok(x),
     };
 }
 
 #[test]
-fn sign_test(){
+fn sign_test() {
     let keypair = Keypair::new();
-    
+
     let message = b"ed25519 signature test";
 
     let sig = keypair.sign(message).unwrap();
-    let verify_result = keypair.verify(message,&sig);
+    let verify_result = keypair.verify(message, &sig);
 
     assert!(verify_result.is_ok());
 
     let fake_message = b"ed25519 signature test fake";
 
-    let verify_result = keypair.verify(fake_message,&sig);
+    let verify_result = keypair.verify(fake_message, &sig);
 
     assert!(verify_result.is_err());
 
     let fake_keypair = Keypair::new();
-    let verify_result = fake_keypair.verify(message,&sig);
+    let verify_result = fake_keypair.verify(message, &sig);
 
     assert!(verify_result.is_err());
 }

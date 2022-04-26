@@ -148,25 +148,34 @@ pub fn rvrf_verify_simple<
     }
 }
 
-// #[cfg(feature = "prove")]
-// pub fn rvrf_prove_ed25519(
-//     public_keys: Vec<PublicKey>,
-//     secret_key: SecretKey,
-//     rand: Scalar,
-//     index: u64,
-// ) -> RVRFProof {
-//     let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
-//     rvrf_prove_simple(pubkeys, intermediary_sk(&secret_key), rand, index)
-// }
+pub mod ed25519 {
+    use super::*;
+    use crate::ed25519::*;
+    #[cfg(feature = "prove")]
+    pub fn rvrf_prove_ed25519(
+        public_keys: Vec<Public>,
+        secret_key: Secret,
+        rand: ScalarSelfDefined,
+        index: u64,
+    ) -> RVRFProof<ScalarSelfDefined, PointSelfDefined> {
+        let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+        rvrf_prove_simple::<ScalarSelfDefined, PointSelfDefined>(
+            pubkeys,
+            intermediary_sk(&secret_key),
+            rand,
+            index,
+        )
+    }
 
-// pub fn rvrf_verfify_ed25519(
-//     rvrfproof: RVRFProof,
-//     public_keys: Vec<PublicKey>,
-//     rand: Scalar,
-// ) -> Option<RistrettoPoint> {
-//     let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
-//     rvrf_verify_simple(rvrfproof, pubkeys, rand)
-// }
+    pub fn rvrf_verfify_ed25519(
+        rvrfproof: RVRFProof<ScalarSelfDefined, PointSelfDefined>,
+        public_keys: Vec<Public>,
+        rand: ScalarSelfDefined,
+    ) -> Option<PointSelfDefined> {
+        let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+        rvrf_verify_simple::<ScalarSelfDefined, PointSelfDefined>(rvrfproof, pubkeys, rand)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -178,29 +187,60 @@ mod tests {
         for amount in 1..5 {
             let samples = 10;
             for _i in 0..samples {
-                // 链上的那一组公钥中自己的公钥的index
                 let l = 0;
                 let witness = Witness::<ScalarSelfDefined>::new(l);
                 let _r = witness.r;
 
-                // 构造 输入参数
-                // 一组 私钥 sks  （模拟每个人的私钥）
                 let sks = generate_sks::<ScalarSelfDefined, PointSelfDefined>(amount);
-                // 生成对应的 sks 的公钥集合 pk_vec  （链上获取）
+
                 let pk_vec: Vec<PointSelfDefined> = sks
                     .clone()
                     .into_iter()
                     .map(generate_pk::<ScalarSelfDefined, PointSelfDefined>)
                     .collect();
-                // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
+
                 let sk_witness = sks[l as usize];
 
-                // 链上获取 就是 r 用来计算 prf
                 let rr = ScalarSelfDefined::random_scalar();
 
                 let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
 
                 let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
+                assert!(res.is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn rvrf_bench_ed25519_test() {
+        use crate::ed25519::*;
+        use ed25519::{rvrf_prove_ed25519, rvrf_verfify_ed25519};
+        for amount in 1..5 {
+            let samples = 10;
+            for _i in 0..samples {
+                let l = 0;
+                let witness = Witness::<ScalarSelfDefined>::new(l);
+                let _r = witness.r;
+
+                let sks: Vec<Secret> = (0..amount).into_iter().map(|_| Secret::random()).collect();
+
+                let pk_vec: Vec<Public> = sks
+                    .clone()
+                    .into_iter()
+                    .map(|sk| {
+                        let sk = Secret::random();
+                        let pk: Public = sk.into();
+                        pk
+                    })
+                    .collect();
+
+                let sk_witness = sks[l as usize];
+
+                let rr = ScalarSelfDefined::random_scalar();
+
+                let rvrfproof = rvrf_prove_ed25519(pk_vec.clone(), sk_witness, rr, l);
+
+                let res = rvrf_verfify_ed25519(rvrfproof, pk_vec, rr);
                 assert!(res.is_some());
             }
         }
