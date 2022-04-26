@@ -8,6 +8,7 @@ use crate::alloc::string::{String, ToString};
 use core::convert::{TryFrom, TryInto};
 use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
 use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
+use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::{constants, ristretto::RistrettoPoint, scalar::Scalar};
 use sha2::{Digest, Sha512};
 use sha3::Sha3_512;
@@ -300,8 +301,45 @@ pub const SIGNATURE_LENGTH: usize = 64;
 #[derive(Copy, Clone)]
 pub struct Secret(pub Scalar);
 
+impl Secret {
+    pub fn random() -> Self {
+        Secret(ScalarSelfDefined::random_scalar().data)
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+        if bytes.len() != 32 {
+            return Err("invalid length".into());
+        }
+        let mut raw_bytes = [0u8; 32];
+        raw_bytes.copy_from_slice(&bytes);
+        let scalar = Scalar::from_bits(raw_bytes);
+        Ok(Secret(scalar))
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.0.as_bytes().to_vec()
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct Public(pub RistrettoPoint);
+
+impl Public {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+        if bytes.len() != 32 {
+            return Err("invalid length".into());
+        }
+        let compressed_ristretto = CompressedRistretto::from_slice(bytes);
+        let ristretto_point = compressed_ristretto
+            .decompress()
+            .ok_or("invalid bytes".to_string())?;
+        Ok(Public(ristretto_point))
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.0.compress().as_bytes().to_vec()
+    }
+}
 
 #[derive(Copy, Clone)]
 pub struct Keypair {
@@ -310,12 +348,19 @@ pub struct Keypair {
 }
 
 impl Keypair {
-    pub fn new() -> Self {
+    pub fn random() -> Self {
         let sk = Secret::random();
         let pk: Public = sk.into();
         Keypair {
             secret: sk,
             public: pk,
+        }
+    }
+
+    pub fn from_secret(secret: &Secret) -> Self {
+        Keypair {
+            secret: secret.clone(),
+            public: secret.clone().into(),
         }
     }
 }
@@ -465,14 +510,6 @@ impl<'a> From<&'a Secret> for ExpandedSecretKey {
     }
 }
 
-impl Secret {
-    pub fn random() -> Self {
-        Secret {
-            0: ScalarSelfDefined::random_scalar().data,
-        }
-    }
-}
-
 impl Keypair {
     pub fn sign(&self, message: &[u8]) -> Result<Signature, String> {
         let expanded: ExpandedSecretKey = (&self.secret).into();
@@ -552,7 +589,7 @@ fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
 
 #[test]
 fn sign_test() {
-    let keypair = Keypair::new();
+    let keypair = Keypair::random();
 
     let message = b"ed25519 signature test";
 
@@ -567,7 +604,7 @@ fn sign_test() {
 
     assert!(verify_result.is_err());
 
-    let fake_keypair = Keypair::new();
+    let fake_keypair = Keypair::random();
     let verify_result = fake_keypair.verify(message, &sig);
 
     assert!(verify_result.is_err());
