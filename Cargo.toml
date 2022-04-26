@@ -11,7 +11,7 @@ sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-sha2 = { version = "0.9.1", default-features = false }
+sha2 = { version = "0.9", default-features = false }
 ed25519-dalek = { version = "1.0.0", default-features = false, features = ["rand", "u64_backend", "alloc"], optional = true }
 p256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 k256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
@@ -40,7 +40,7 @@ ed25519-dalek = "1"
 #[cfg(feature = "std-rand")]
 
 [features]
-default = ["std", "pk256", "edkey"]
+default = ["std", "pk256", "edkey", "std-prove"]
 std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "polynomials/std", "prove"]
 
 std-prove = ["prove","std-rand"] # prove std-rand

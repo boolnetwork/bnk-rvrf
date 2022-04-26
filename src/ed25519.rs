@@ -5,8 +5,12 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand_core::OsRng;
 
 use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, constants};
 use sha3::Sha3_512;
+use sha2::{Sha512, Digest};
+use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
+use crate::alloc::string::{String, ToString};
+use core::convert::{TryFrom, TryInto};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -256,4 +260,282 @@ impl PointTrait for PointSelfDefined {
     fn point_to_bytes(&self) -> Vec<u8> {
         self.data.compress().to_bytes().to_vec()
     }
+}
+
+pub const SIGNATURE_LENGTH: usize = 64;
+#[derive(Copy, Clone)]
+pub struct Secret(pub Scalar);
+
+#[derive(Copy, Clone)]
+pub struct Public(pub RistrettoPoint);
+
+#[derive(Copy, Clone)]
+pub struct Keypair{
+    pub secret: Secret,
+    pub public: Public,
+}
+
+impl Keypair{
+    pub fn new() -> Self{
+        let sk = Secret::random();
+        let pk:Public = sk.into();
+        Keypair{ secret: sk, public: pk }
+    }
+}
+#[derive(Copy, Clone)]
+pub struct Signature(pub [u8;SIGNATURE_LENGTH]);
+
+impl Signature {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+        bytes.try_into()
+    }
+}
+pub struct ExpandedSecretKey {
+    pub(crate) key: Scalar,
+    pub(crate) nonce: [u8; 32],
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(crate) struct InternalSignature {
+    pub(crate) R: CompressedEdwardsY,
+    pub(crate) s: Scalar,
+}
+
+impl InternalSignature {
+    /// Convert this `Signature` to a byte array.
+    #[inline]
+    pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
+        let mut signature_bytes: [u8; SIGNATURE_LENGTH] = [0u8; SIGNATURE_LENGTH];
+
+        signature_bytes[..32].copy_from_slice(&self.R.as_bytes()[..]);
+        signature_bytes[32..].copy_from_slice(&self.s.as_bytes()[..]);
+        signature_bytes
+    }
+
+    #[inline]
+    pub fn from_bytes(bytes: &[u8]) -> Result<InternalSignature, String> {
+        if bytes.len() != SIGNATURE_LENGTH {
+            return Err( "signature lenth".to_string());
+        }
+        let mut lower: [u8; 32] = [0u8; 32];
+        let mut upper: [u8; 32] = [0u8; 32];
+
+        lower.copy_from_slice(&bytes[..32]);
+        upper.copy_from_slice(&bytes[32..]);
+
+        let s: Scalar;
+
+        match check_scalar(upper) {
+            Ok(x)  => s = x,
+            Err(x) => return Err(x),
+        }
+
+        Ok(InternalSignature {
+            R: CompressedEdwardsY(lower),
+            s: s,
+        })
+    }
+}
+
+impl TryFrom<&Signature> for InternalSignature {
+    type Error = String;
+
+    fn try_from(sig: &Signature) -> Result<InternalSignature, String> {
+        InternalSignature::from_bytes(sig.as_bytes())
+    }
+}
+
+impl From<InternalSignature> for Signature {
+    fn from(sig: InternalSignature) -> Signature {
+        Signature::from_bytes(&sig.to_bytes()).unwrap()
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for Signature {
+    type Error = String;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, String> {
+
+        if bytes.len() != SIGNATURE_LENGTH {
+            return Err("error".to_string());
+        }
+
+        if bytes[SIGNATURE_LENGTH - 1] & 0b1110_0000 != 0 {
+            return Err("error".to_string());
+        }
+
+        let mut arr = [0u8; SIGNATURE_LENGTH];
+        arr.copy_from_slice(bytes);
+        Ok(Signature(arr))
+    }
+}
+
+impl ExpandedSecretKey{
+    pub fn sign(&self, message: &[u8], public_key: &Public) -> Signature {
+        let mut h: Sha512 = Sha512::new();
+        let R: CompressedEdwardsY;
+        let r: Scalar;
+        let s: Scalar;
+        let k: Scalar;
+
+        h.update(&self.nonce);
+        h.update(&message);
+
+        let mut output = [0u8; 64];
+        output.copy_from_slice(h.finalize().as_slice());
+        r = Scalar::from_bytes_mod_order_wide(&output);
+
+        R = (&r * &constants::ED25519_BASEPOINT_TABLE).compress();
+
+        h = Sha512::new();
+        h.update(R.as_bytes());
+        h.update(public_key.0.compress().as_bytes());
+        h.update(&message);
+
+        let mut output = [0u8; 64];
+        output.copy_from_slice(h.finalize().as_slice());
+        k = Scalar::from_bytes_mod_order_wide(&output);
+
+        s = &(&k * &self.key) + &r;
+
+        InternalSignature { R, s }.into()
+    }
+}
+
+impl<'a> From<&'a Secret> for ExpandedSecretKey {
+
+    fn from(secret_key: &'a Secret) -> ExpandedSecretKey {
+        let mut h: Sha512 = Sha512::default();
+        let mut hash:  [u8; 64] = [0u8; 64];
+        let mut lower: [u8; 32] = [0u8; 32];
+        let mut upper: [u8; 32] = [0u8; 32];
+
+        h.update(secret_key.0.as_bytes());
+        hash.copy_from_slice(h.finalize().as_slice());
+
+        lower.copy_from_slice(&hash[00..32]);
+        upper.copy_from_slice(&hash[32..64]);
+
+        lower[0]  &= 248;
+        lower[31] &=  63;
+        lower[31] |=  64;
+
+        ExpandedSecretKey{ key: Scalar::from_bits(lower), nonce: upper, }
+    }
+}
+
+impl Secret {
+    pub fn random() -> Self {
+        Secret{
+            0: ScalarSelfDefined::random_scalar().data
+        }
+    }
+}
+
+impl Keypair{
+    pub fn sign(&self,message:&[u8]) -> Result<Signature, String>{
+        let expanded: ExpandedSecretKey = (&self.secret).into();
+        Ok(expanded.sign(&message, &self.public).into())
+    }
+
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), String> {
+        self.public.verify(message, signature)
+    }
+}
+
+impl Public {
+    #[allow(non_snake_case)]
+    fn verify(
+        &self,
+        message: &[u8],
+        signature: &Signature
+    ) -> Result<(), String>
+    {
+        let signature = InternalSignature::try_from(signature)?;
+
+        let mut h: Sha512 = Sha512::new();
+        let R: EdwardsPoint;
+        let k: Scalar;
+        let minus_A: EdwardsPoint = -self.0.0;
+
+        h.update(signature.R.as_bytes());
+        h.update(self.0.compress().as_bytes());
+        h.update(&message);
+
+        let mut output = [0u8; 64];
+        output.copy_from_slice(h.finalize().as_slice());
+        k = Scalar::from_bytes_mod_order_wide(&output);
+
+        R = EdwardsPoint::vartime_double_scalar_mul_basepoint(&k, &(minus_A), &signature.s);
+
+        if R.compress() == signature.R {
+            Ok(())
+        } else {
+            Err("VerifyError".to_string())
+        }
+    }
+}
+
+impl From<Secret> for Public{
+    fn from(s: Secret) -> Self {
+        let mut h: Sha512 = Sha512::new();
+        let mut hash: [u8; 64] = [0u8; 64];
+        let mut digest: [u8; 32] = [0u8; 32];
+
+        h.update(s.0.as_bytes());
+        hash.copy_from_slice(h.finalize().as_slice());
+
+        digest.copy_from_slice(&hash[..32]);
+
+        mangle_scalar_bits_and_multiply_by_basepoint_to_produce_public_key(&mut digest)
+    }
+}
+
+fn mangle_scalar_bits_and_multiply_by_basepoint_to_produce_public_key(
+    bits: &mut [u8; 32],
+) -> Public {
+    bits[0] &= 248;
+    bits[31] &= 127;
+    bits[31] |= 64;
+
+    let point = &Scalar::from_bits(*bits) * &constants::ED25519_BASEPOINT_TABLE;
+
+    Public(RistrettoPoint(point))
+}
+
+fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
+    if bytes[31] & 240 == 0 {
+        return Ok(Scalar::from_bits(bytes))
+    }
+
+    match Scalar::from_canonical_bytes(bytes) {
+        None => return Err( "ScalarFormatError".to_string()),
+        Some(x) => return Ok(x),
+    };
+}
+
+#[test]
+fn sign_test(){
+    let keypair = Keypair::new();
+    
+    let message = b"ed25519 signature test";
+
+    let sig = keypair.sign(message).unwrap();
+    let verify_result = keypair.verify(message,&sig);
+
+    assert!(verify_result.is_ok());
+
+    let fake_message = b"ed25519 signature test fake";
+
+    let verify_result = keypair.verify(fake_message,&sig);
+
+    assert!(verify_result.is_err());
+
+    let fake_keypair = Keypair::new();
+    let verify_result = fake_keypair.verify(message,&sig);
+
+    assert!(verify_result.is_err());
 }

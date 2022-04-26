@@ -23,7 +23,7 @@ pub use rvrf::rvrf_verify_simple;
 
 #[macro_use]
 extern crate lazy_static;
-
+extern crate sha2;
 #[cfg(test)]
 mod tests {
 
