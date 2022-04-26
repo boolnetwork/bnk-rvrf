@@ -40,7 +40,7 @@ ed25519-dalek = "1"
 
 [features]
 default = ["std", "pk256", "std-prove"]
-std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "ed25519-dalek/std", "sha2/std", "polynomials/std", "prove"]
+std = ["curve25519-dalek/std", "sha3/std", "serde_json/std", "serde/std", "sha2/std", "polynomials/std", "prove"]
 
 std-prove = ["prove","std-rand"] # prove std-rand
 sgx-prove = ["prove","sgx-rand"]
