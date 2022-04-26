@@ -12,7 +12,9 @@ mod util;
 mod zero_or_one;
 
 pub mod ed25519;
+#[cfg(feature = "pk256")]
 pub mod p256;
+#[cfg(feature = "pk256")]
 pub mod secp256k1;
 
 #[cfg(feature = "prove")]

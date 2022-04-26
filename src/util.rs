@@ -173,7 +173,7 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::p256::ScalarSelfDefined;
+    use crate::ed25519::ScalarSelfDefined;
     #[test]
     fn number_to_binary_test() {
         let _a = number_to_binary(50);

@@ -175,7 +175,7 @@ impl<S: ScalarTrait, P: PointTrait> PRFPoof<S, P> {
 mod tests {
     use super::*;
 
-    use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
+    use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
     #[test]
     fn p_test() {
         let sk = ScalarSelfDefined::random_scalar();

@@ -524,6 +524,7 @@ mod tests {
         assert_eq!(result, true);
     }
 
+    #[cfg(feature = "pk256")]
     #[test]
     fn ooom_p256_test() {
         use crate::p256::{PointSelfDefined, ScalarSelfDefined};
@@ -554,6 +555,7 @@ mod tests {
     //     let b: Vec<Com> = a.into_iter().map(|sk| Com::commit_scalar(sk)).collect();
     // }
     //
+    #[cfg(feature = "pk256")]
     #[test]
     fn poly_test() {
         use crate::p256::ScalarSelfDefined;
@@ -614,8 +616,8 @@ mod tests {
 
     #[test]
     fn a_test() {
-        //use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
-        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{ScalarSelfDefined,PointSelfDefined};
+        //use crate::p256::{PointSelfDefined, ScalarSelfDefined};
 
         let number_of_public_keys = 10u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);

@@ -142,9 +142,11 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+    use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
 
+    #[cfg(feature = "pk256")]
     use p256::elliptic_curve::sec1::EncodedPoint;
+    #[cfg(feature = "pk256")]
     use p256::AffinePoint;
 
     #[test]
@@ -196,6 +198,7 @@ mod tests {
         assert_eq!(left_2, right_2);
     }
 
+    #[cfg(feature = "pk256")]
     #[test]
     fn zero_test() {
         use p256::elliptic_curve::sec1::FromEncodedPoint;
@@ -208,6 +211,7 @@ mod tests {
         let _cc = ProjectivePoint::from(bb);
     }
 
+    #[cfg(feature = "pk256")]
     #[test]
     fn zero_or_one_p256_test() {
         let m: ScalarSelfDefined = ScalarTrait::zero();
@@ -233,9 +237,10 @@ mod tests {
         assert_eq!(res, true);
     }
 
+    #[cfg(feature = "pk256")]
     #[test]
     fn zero_or_one_secp256k1_test() {
-        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
         let m: ScalarSelfDefined = ScalarTrait::zero();
         let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
 
