@@ -12,6 +12,7 @@ use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::{constants, ristretto::RistrettoPoint, scalar::Scalar};
 use sha2::{Digest, Sha512};
 use sha3::Sha3_512;
+use ed25519_dalek::Signer;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
@@ -481,7 +482,7 @@ impl ExpandedSecretKey {
 
         h = Sha512::new();
         h.update(R.as_bytes());
-        h.update(public_key.0.compress().as_bytes());
+        h.update(public_key.0.0.compress().as_bytes().to_vec());
         h.update(&message);
 
         let mut output = [0u8; 64];
@@ -540,7 +541,7 @@ impl Public {
         let minus_A: EdwardsPoint = -self.0 .0;
 
         h.update(signature.R.as_bytes());
-        h.update(self.0.compress().as_bytes());
+        h.update(self.0.0.compress().as_bytes().to_vec());
         h.update(&message);
 
         let mut output = [0u8; 64];

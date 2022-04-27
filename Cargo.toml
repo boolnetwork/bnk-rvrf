@@ -34,9 +34,6 @@ default-features = false
 features = ["getrandom"]
 optional = true
 
-[dev-dependencies]
-ed25519-dalek = "1"
-#[cfg(feature = "std-rand")]
 
 [features]
 default = ["std", "pk256", "std-prove"]
