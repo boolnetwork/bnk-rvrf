@@ -3,8 +3,7 @@ use alloc::vec::Vec;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "std-rand")]
 use rand_core::OsRng;
-use serde::de::{Deserialize, Deserializer};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::alloc::string::{String, ToString};
 use core::convert::{TryFrom, TryInto};
@@ -12,10 +11,11 @@ use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASE
 use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::{constants, ristretto::RistrettoPoint, scalar::Scalar};
+use serde_json::{from_slice, to_vec};
 use sha2::{Digest, Sha512};
 use sha3::Sha3_512;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct ScalarSelfDefined {
     pub data: Scalar,
 }
@@ -28,64 +28,9 @@ impl ScalarSelfDefined {
     }
 }
 
-impl Serialize for ScalarSelfDefined {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("ScalarSelfDefined", 1)?;
-        s.serialize_field("data", &self.data.as_bytes().to_vec())?;
-        s.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for ScalarSelfDefined {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        if s.len() != 32 {
-            return Err(serde::de::Error::custom("invalid length"));
-        }
-        let mut s_bytes = [0u8; 32];
-        s_bytes.copy_from_slice(s.as_bytes());
-        let data = Scalar::from_bits(s_bytes);
-        Ok(ScalarSelfDefined { data })
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct PointSelfDefined {
     pub data: RistrettoPoint,
-}
-
-impl Serialize for PointSelfDefined {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("PointSelfDefined", 1)?;
-        s.serialize_field("data", &self.data.compress().as_bytes().to_vec())?;
-        s.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for PointSelfDefined {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        if s.len() != 32 {
-            return Err(serde::de::Error::custom("invalid length"));
-        }
-        let compressed_ristretto = CompressedRistretto::from_slice(s.as_bytes());
-        let data = compressed_ristretto
-            .decompress()
-            .ok_or_else(|| serde::de::Error::custom("invalid bytes"))?;
-        Ok(PointSelfDefined { data })
-    }
 }
 
 impl MulAssign<ScalarSelfDefined> for ScalarSelfDefined {
