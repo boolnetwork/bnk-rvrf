@@ -2,8 +2,6 @@ use alloc::format;
 use alloc::vec;
 pub use alloc::vec::Vec;
 
-use sha2::{Digest, Sha512};
-
 use crate::traits::{PointTrait, ScalarTrait};
 use core::ops::Mul;
 

@@ -12,10 +12,6 @@ pub struct CRS<S: ScalarTrait, P: PointTrait> {
     pub ph: PhantomData<S>,
 }
 
-pub fn prf_h_2<S: ScalarTrait, P: PointTrait>(input: S) -> P {
-    P::hash_to_point(&input.bytes())
-}
-
 #[derive(Copy, Clone, Debug, Default)]
 pub struct PRFProver<S: ScalarTrait, P: PointTrait> {
     pub ph: PhantomData<S>,
@@ -176,6 +172,11 @@ mod tests {
     use super::*;
 
     use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+
+    pub fn prf_h_2<S: ScalarTrait, P: PointTrait>(input: S) -> P {
+        P::hash_to_point(&input.bytes())
+    }
+
     #[test]
     fn p_test() {
         let sk = ScalarSelfDefined::random_scalar();

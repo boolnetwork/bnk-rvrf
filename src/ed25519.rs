@@ -83,7 +83,7 @@ impl<'de> Deserialize<'de> for PointSelfDefined {
         let compressed_ristretto = CompressedRistretto::from_slice(s.as_bytes());
         let data = compressed_ristretto
             .decompress()
-            .ok_or(serde::de::Error::custom("invalid bytes"))?;
+            .ok_or_else(|| serde::de::Error::custom("invalid bytes"))?;
         Ok(PointSelfDefined { data })
     }
 }
@@ -377,7 +377,7 @@ impl Secret {
             return Err("invalid length".into());
         }
         let mut raw_bytes = [0u8; 32];
-        raw_bytes.copy_from_slice(&bytes);
+        raw_bytes.copy_from_slice(bytes);
         let scalar = Scalar::from_bits(raw_bytes);
         Ok(Secret(scalar))
     }
@@ -395,15 +395,15 @@ impl Public {
         if bytes.len() != 32 {
             return Err("invalid length".into());
         }
-        let compressed_ristretto = CompressedRistretto::from_slice(bytes);
-        let ristretto_point = compressed_ristretto
+        let compress_ed_y = CompressedEdwardsY::from_slice(bytes);
+        let ed_point = compress_ed_y
             .decompress()
-            .ok_or("invalid bytes".to_string())?;
-        Ok(Public(ristretto_point))
+            .ok_or_else(|| "CompressedEdwardsY decompress err".to_string())?;
+        Ok(Public(RistrettoPoint(ed_point)))
     }
 
     pub fn as_bytes(&self) -> Vec<u8> {
-        self.0.compress().as_bytes().to_vec()
+        self.0 .0.compress().as_bytes().to_vec()
     }
 }
 
@@ -427,7 +427,7 @@ impl Keypair {
     pub fn from_secret(secret: &Secret) -> Self {
         Keypair {
             secret: secret.clone(),
-            public: secret.clone().into(),
+            public: (*secret).into(),
         }
     }
 }
@@ -484,7 +484,7 @@ impl InternalSignature {
 
         Ok(InternalSignature {
             R: CompressedEdwardsY(lower),
-            s: s,
+            s,
         })
     }
 }
@@ -547,7 +547,7 @@ impl ExpandedSecretKey {
         output.copy_from_slice(h.finalize().as_slice());
         k = Scalar::from_bytes_mod_order_wide(&output);
 
-        s = &(&k * &self.key) + &r;
+        s = (k * self.key) + r;
 
         InternalSignature { R, s }.into()
     }
@@ -580,7 +580,7 @@ impl<'a> From<&'a Secret> for ExpandedSecretKey {
 impl Keypair {
     pub fn sign(&self, message: &[u8]) -> Result<Signature, String> {
         let expanded: ExpandedSecretKey = (&self.secret).into();
-        Ok(expanded.sign(&message, &self.public).into())
+        Ok(expanded.sign(message, &self.public))
     }
 
     pub fn verify(&self, message: &[u8], signature: &Signature) -> Result<(), String> {
@@ -649,9 +649,9 @@ fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
     }
 
     match Scalar::from_canonical_bytes(bytes) {
-        None => return Err("ScalarFormatError".to_string()),
-        Some(x) => return Ok(x),
-    };
+        None => Err("ScalarFormatError".to_string()),
+        Some(x) => Ok(x),
+    }
 }
 
 #[test]

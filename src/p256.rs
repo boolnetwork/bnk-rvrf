@@ -240,7 +240,7 @@ impl PointTrait for PointSelfDefined {
         let mut array = [0; 32];
         array.clone_from_slice(&HASH.hash(input));
         let mut bytes = FieldBytes::default();
-        bytes.copy_from_slice(&array.as_ref());
+        bytes.copy_from_slice(array.as_ref());
         let scalar = Scalar::from_bytes_reduced(&bytes);
         PointSelfDefined {
             data: (ProjectivePoint::from(AffinePoint::generator()) * scalar).to_affine(),
