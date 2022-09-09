@@ -601,14 +601,24 @@ fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
 
 #[test]
 fn sign_test() {
-    let keypair = Keypair::random();
+    use std;
 
+    const c_public:[u8; 32] = [138u8, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202, 103, 9, 191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92];
+    const c_signature:[u8; 64] = [145u8, 31, 10, 79, 191, 27, 91, 151, 47, 91, 186, 52, 154, 61, 133, 227, 200, 229, 105, 58, 94, 149, 143, 188, 232, 33, 127, 172, 198, 190, 104, 188, 67, 181, 79, 181, 13, 82, 145, 56, 87, 40, 245, 81, 33, 80, 30, 39, 233, 201, 93, 168, 228, 76, 141, 109, 205, 90, 159, 132, 10, 31, 77, 12];
+    
+    let secret = Secret::from_bytes(&[1;32]).unwrap();
+    let keypair = Keypair::from_secret(&secret);
+
+    assert_eq!(keypair.public.as_bytes(), c_public);
+    // std::println!("public: {:?}", keypair.public.as_bytes());
     let message = b"ed25519 signature test";
 
     let sig = keypair.sign(message).unwrap();
     let verify_result = keypair.verify(message, &sig);
 
     assert!(verify_result.is_ok());
+    // std::println!("sig: {:?}", sig.as_bytes());
+    assert_eq!(sig.as_bytes(), c_signature);
 
     let fake_message = b"ed25519 signature test fake";
 

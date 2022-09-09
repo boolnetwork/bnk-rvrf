@@ -2,6 +2,8 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
+#[cfg(test)]
+extern crate std;
 pub extern crate alloc;
 
 mod one_out_of_many;
