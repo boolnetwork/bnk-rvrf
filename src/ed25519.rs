@@ -287,8 +287,8 @@ pub fn intermediary_sk(secret_key: &Secret) -> ScalarSelfDefined {
     let mut hash: [u8; 64] = [0u8; 64];
     let mut digest: [u8; 32] = [0u8; 32];
 
-    h.update(secret_key.0.as_bytes());
-    hash.copy_from_slice(h.finalize().as_slice());
+    h.input(secret_key.0.as_bytes());
+    hash.copy_from_slice(h.result().as_slice());
 
     digest.copy_from_slice(&hash[..32]);
 
@@ -474,22 +474,22 @@ impl ExpandedSecretKey {
         let s: Scalar;
         let k: Scalar;
 
-        h.update(&self.nonce);
-        h.update(&message);
+        h.input(&self.nonce);
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         r = Scalar::from_bytes_mod_order_wide(&output);
 
         R = (&r * &constants::ED25519_BASEPOINT_TABLE).compress();
 
         h = Sha512::new();
-        h.update(R.as_bytes());
-        h.update(public_key.0 .0.compress().as_bytes().to_vec());
-        h.update(&message);
+        h.input(R.as_bytes());
+        h.input(public_key.0 .0.compress().as_bytes().to_vec());
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         k = Scalar::from_bytes_mod_order_wide(&output);
 
         s = (k * self.key) + r;
@@ -505,8 +505,8 @@ impl<'a> From<&'a Secret> for ExpandedSecretKey {
         let mut lower: [u8; 32] = [0u8; 32];
         let mut upper: [u8; 32] = [0u8; 32];
 
-        h.update(secret_key.0.as_bytes());
-        hash.copy_from_slice(h.finalize().as_slice());
+        h.input(secret_key.0.as_bytes());
+        hash.copy_from_slice(h.result().as_slice());
 
         lower.copy_from_slice(&hash[00..32]);
         upper.copy_from_slice(&hash[32..64]);
@@ -543,12 +543,12 @@ impl Public {
         let k: Scalar;
         let minus_A: EdwardsPoint = -self.0 .0;
 
-        h.update(signature.R.as_bytes());
-        h.update(self.0 .0.compress().as_bytes().to_vec());
-        h.update(&message);
+        h.input(signature.R.as_bytes());
+        h.input(self.0 .0.compress().as_bytes().to_vec());
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         k = Scalar::from_bytes_mod_order_wide(&output);
 
         R = EdwardsPoint::vartime_double_scalar_mul_basepoint(&k, &(minus_A), &signature.s);
@@ -567,8 +567,8 @@ impl From<Secret> for Public {
         let mut hash: [u8; 64] = [0u8; 64];
         let mut digest: [u8; 32] = [0u8; 32];
 
-        h.update(s.0.as_bytes());
-        hash.copy_from_slice(h.finalize().as_slice());
+        h.input(s.0.as_bytes());
+        hash.copy_from_slice(h.result().as_slice());
 
         digest.copy_from_slice(&hash[..32]);
 
