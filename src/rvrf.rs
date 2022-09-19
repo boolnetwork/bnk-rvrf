@@ -1,60 +1,75 @@
 use crate::one_out_of_many::*;
-use crate::prf::{PRFPoof, PRFProver, PRFVerifier};
-use crate::util::{fix_len_binary, number_to_binary};
-use crate::util::{generate_pk, generate_sks, kronecker_delta, Com, Commitment, Secret};
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::MultiscalarMul};
-use polynomials::*;
+#[cfg(feature = "prove")]
+use crate::prf::PRFProver;
+#[cfg(feature = "prove")]
+use crate::util::generate_sks;
+
+#[cfg(feature = "prove")]
+use crate::util::{generate_pk, Com};
+
+use crate::prf::{PRFPoof, PRFVerifier};
+
 use serde::{Deserialize, Serialize};
-use zk_utils_test::{
-    bytes_to_scalar, get_random_scalar, hash_to_scalar, point_to_bytes, scalar_to_bytes,
-    BASEPOINT_G1, BASEPOINT_G2,
-};
+
+use crate::traits::{PointTrait, ScalarTrait};
+use alloc::vec::Vec;
+use core::marker::PhantomData;
+use core::ops::{Mul, Neg};
 
 #[derive(Clone, Debug, Default)]
-pub struct VRFStatement {
-    pub pk_vec: Vec<RistrettoPoint>,
+pub struct VRFStatement<S: ScalarTrait, P: PointTrait> {
+    pub pk_vec: Vec<P>,
+    pub ph: PhantomData<S>,
 }
 
-impl VRFStatement {
-    pub fn new(amount: u64, r: Scalar) -> Self {
-        let sks = generate_sks(amount);
-        let pk_vec: Vec<RistrettoPoint> = sks
+#[cfg(feature = "prove")]
+impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> VRFStatement<S, P> {
+    pub fn new(amount: u64, r: S) -> Self {
+        let sks = generate_sks::<S, P>(amount);
+        let pk_vec: Vec<P> = sks
             .into_iter()
-            .map(|sk| Com::commit_scalar_2(sk, r).comm.point)
+            .map(|sk| Com::<S, P>::commit_scalar_2(sk, r).comm.point)
             .collect();
 
-        Self { pk_vec }
+        Self {
+            pk_vec,
+            ph: Default::default(),
+        }
     }
 }
 
-pub fn generate_pks(amount: u64) -> Vec<RistrettoPoint> {
-    let sks = generate_sks(amount);
-    let pk_vec: Vec<RistrettoPoint> = sks.into_iter().map(|sk| generate_pk(sk)).collect();
+#[cfg(feature = "prove")]
+pub fn generate_pks<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+    amount: u64,
+) -> Vec<P> {
+    let sks = generate_sks::<S, P>(amount);
+    let pk_vec: Vec<P> = sks.into_iter().map(generate_pk).collect();
     pk_vec
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct RVRFProof {
-    pub m1: RistrettoPoint,
-    pub m2: RistrettoPoint,
-    pub proof: Proof,
-    pub proof_prf: PRFPoof,
-    pub c: RistrettoPoint,
+pub struct RVRFProof<S: ScalarTrait, P: PointTrait> {
+    pub m1: P,
+    pub m2: P,
+    pub proof: Proof<S, P>,
+    pub proof_prf: PRFPoof<S, P>,
+    pub c: P,
 }
 
-pub fn rvrf_prove(
-    witness: Witness,
-    statment: Statement,
-    rr: Scalar,
-    r: Scalar,
-    c: RistrettoPoint,
-    sk: Scalar,
-) -> RVRFProof {
-    let crs = CRS::new(get_random_scalar(), get_random_scalar());
+#[cfg(feature = "prove")]
+pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+    witness: Witness<S>,
+    statement: Statement<S, P>,
+    rr: S,
+    r: S,
+    c: P,
+    sk: S,
+) -> RVRFProof<S, P> {
+    let crs = CRS::new(S::random_scalar(), S::random_scalar());
     let sk_witness = sk;
     let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
-    let prover = Prover::new(witness, statment.clone(), crs);
-    let (proof, hash) = prover.prove_return_hash(hash_vec.clone());
+    let prover = Prover::new(witness, statement, crs);
+    let (proof, hash) = prover.prove_return_hash(hash_vec);
     let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_pie, t_pie, u, m1, m2, hash);
     RVRFProof {
         m1,
@@ -65,326 +80,168 @@ pub fn rvrf_prove(
     }
 }
 
-pub fn rvrf_verify(rvrfproof: RVRFProof, statment: Statement, rr: Scalar) -> bool {
+pub fn rvrf_verify<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+    rvrfproof: RVRFProof<S, P>,
+    statement: Statement<S, P>,
+    rr: S,
+) -> bool {
     let RVRFProof {
         m1,
         m2,
         proof,
         proof_prf,
-        c,
+        c: _,
     } = rvrfproof;
-    let crs = CRS::new(get_random_scalar(), get_random_scalar());
+    let crs = CRS::new(S::default(), S::default());
 
     let mut hash_vec: Vec<Vec<u8>> = Vec::new();
-    hash_vec.push(point_to_bytes(&m1));
-    hash_vec.push(point_to_bytes(&m2));
-    let verifier = Verifier::new(statment, crs);
+    hash_vec.push(P::point_to_bytes(&m1));
+    hash_vec.push(P::point_to_bytes(&m2));
+    let verifier = Verifier::new(statement, crs);
     let (result, hash) = verifier.verify_return_hash(proof, hash_vec);
-    let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, Scalar::one(), rr, hash);
+    let proof_prf_result = PRFVerifier::verify_with_hash(proof_prf, S::one(), rr, hash);
 
-    if result == true && proof_prf_result == true {
+    if result && proof_prf_result {
         return true;
     }
     false
 }
-use std::time::{Duration, Instant};
 
+#[cfg(feature = "prove")]
 /// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
-pub fn rvrf_prove_simple(
-    public_keys: Vec<RistrettoPoint>,
-    secret_key: Scalar,
-    rand: Scalar,
+pub fn rvrf_prove_simple<
+    S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>,
+    P: PointTrait + Mul<S, Output = P>,
+>(
+    public_keys: Vec<P>,
+    secret_key: S,
+    rand: S,
     index: u64,
-) -> RVRFProof {
+) -> RVRFProof<S, P> {
     let l = index;
-    let witness = Witness::new(l);
+    let witness = Witness::<S>::new(l);
     let r = witness.r;
-    let c = Com::commit_scalar_2(secret_key, -r).comm.point;
+    let c = Com::<S, P>::commit_scalar_2(secret_key, -r).comm.point;
 
-    let pks: Vec<RistrettoPoint> = public_keys
-        .clone()
-        .into_iter()
-        .map(|each| each - c)
-        .collect();
-    let statment: Statement = pks.into();
+    let pks: Vec<P> = public_keys.into_iter().map(|each| each - c).collect();
+    let statement: Statement<S, P> = pks.into();
 
-    let rvrfproof = rvrf_prove(witness, statment.clone(), rand, r, c, secret_key);
-    rvrfproof
+    rvrf_prove(witness, statement, rand, r, c, secret_key)
 }
 
 /// rvrfproof证明  public_keys链上公钥s  rand链上随机数  如果true 返回 v 否则 none
-pub fn rvrf_verify_simple(
-    rvrfproof: RVRFProof,
-    public_keys: Vec<RistrettoPoint>,
-    rand: Scalar,
-) -> Option<RistrettoPoint> {
+pub fn rvrf_verify_simple<
+    S: ScalarTrait + Mul<P, Output = P>,
+    P: PointTrait + Mul<S, Output = P>,
+>(
+    rvrfproof: RVRFProof<S, P>,
+    public_keys: Vec<P>,
+    rand: S,
+) -> Option<P> {
     let c = rvrfproof.c;
-    let pks: Vec<RistrettoPoint> = public_keys
-        .clone()
-        .into_iter()
-        .map(|each| each - c)
-        .collect();
-    let statment: Statement = pks.into();
+    let pks: Vec<P> = public_keys.into_iter().map(|each| each - c).collect();
+    let statement: Statement<S, P> = pks.into();
 
-    match rvrf_verify(rvrfproof.clone(), statment, rand) {
+    match rvrf_verify(rvrfproof.clone(), statement, rand) {
         true => Some(rvrfproof.proof_prf.get_v()),
         false => None,
     }
 }
 
-pub fn rvrf_test_wasm() -> bool {
-    let l = 6;
-    let a = Scalar::zero();
-    let b = Scalar::one();
-    let c = a + b;
-    let d = generate_pk(c);
+pub mod ed25519 {
+    use super::*;
+    use crate::ed25519::*;
+    #[cfg(feature = "prove")]
+    pub fn rvrf_prove_ed25519(
+        public_keys: Vec<Public>,
+        secret_key: Secret,
+        rand: ScalarSelfDefined,
+        index: u64,
+    ) -> RVRFProof<ScalarSelfDefined, PointSelfDefined> {
+        let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+        rvrf_prove_simple::<ScalarSelfDefined, PointSelfDefined>(
+            pubkeys,
+            intermediary_sk(&secret_key),
+            rand,
+            index,
+        )
+    }
 
-    get_random_scalar();
-    rvrf_full_test_wasm()
-    //Scalar::one();
-}
-
-pub fn rvrf_full_test_wasm() -> bool {
-    let l = 6;
-    let witness = Witness::new(l);
-    let r = witness.r;
-    let amount = 15;
-
-    // 构造 输入参数
-    let sks = generate_sks(amount);
-    let pk_vec: Vec<RistrettoPoint> = sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-    let sk_witness = sks[l as usize];
-    let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
-    let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
-    let statment: Statement = pks.into();
-    //
-
-    let crs = CRS::new(get_random_scalar(), r);
-    let rr = get_random_scalar();
-
-    let rvrfproof = rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
-    rvrf_verify(rvrfproof, statment, rr)
+    pub fn rvrf_verfify_ed25519(
+        rvrfproof: RVRFProof<ScalarSelfDefined, PointSelfDefined>,
+        public_keys: Vec<Public>,
+        rand: ScalarSelfDefined,
+    ) -> Option<PointSelfDefined> {
+        let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
+        rvrf_verify_simple::<ScalarSelfDefined, PointSelfDefined>(rvrfproof, pubkeys, rand)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json;
-    use std::ops::Index;
-    use std::time::{Duration, Instant};
 
     #[test]
     fn rvrf_bench_simple_test() {
+        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
         for amount in 1..5 {
-            let mut total_prove = Duration::new(0, 0);
-            let mut total_verify = Duration::new(0, 0);
-            let mut total_size = 0usize;
             let samples = 10;
-            for i in 0..samples {
-                // 链上的那一组公钥中自己的公钥的index
+            for _i in 0..samples {
                 let l = 0;
-                let witness = Witness::new(l);
-                let r = witness.r;
+                let witness = Witness::<ScalarSelfDefined>::new(l);
+                let _r = witness.r;
 
-                // 构造 输入参数
-                // 一组 私钥 sks  （模拟每个人的私钥）
-                let sks = generate_sks(amount);
-                // 生成对应的 sks 的公钥集合 pk_vec  （链上获取）
-                let pk_vec: Vec<RistrettoPoint> =
-                    sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-                // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
+                let sks = generate_sks::<ScalarSelfDefined, PointSelfDefined>(amount);
+
+                let pk_vec: Vec<PointSelfDefined> = sks
+                    .clone()
+                    .into_iter()
+                    .map(generate_pk::<ScalarSelfDefined, PointSelfDefined>)
+                    .collect();
+
                 let sk_witness = sks[l as usize];
 
-                // 链上获取 就是 r 用来计算 prf
-                let rr = get_random_scalar();
+                let rr = ScalarSelfDefined::random_scalar();
 
-                let start = Instant::now();
                 let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
-                total_prove += start.elapsed();
-                let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
-                total_size += len1;
 
-                let start = Instant::now();
                 let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
-                total_verify += start.elapsed();
                 assert!(res.is_some());
             }
-            let total_prove_avg = total_prove / samples;
-            let total_verify_avg = total_verify / samples;
-            let total_size_avg = total_size / samples as usize;
-            println!(
-                "amount:{:?},prove:{:?},verify:{:?},size:{:?}",
-                amount, total_prove_avg, total_verify_avg, total_size_avg
-            );
         }
     }
 
     #[test]
-    fn rvrf_bench_test() {
+    fn rvrf_bench_ed25519_test() {
+        use crate::ed25519::*;
+        use ed25519::{rvrf_prove_ed25519, rvrf_verfify_ed25519};
         for amount in 1..5 {
-            let mut total_prove = Duration::new(0, 0);
-            let mut total_verify = Duration::new(0, 0);
-            let mut total_size = 0usize;
             let samples = 10;
-            for i in 0..samples {
-                // 链上的那一组公钥中自己的公钥的index
+            for _i in 0..samples {
                 let l = 0;
-                let witness = Witness::new(l);
-                let r = witness.r;
+                let witness = Witness::<ScalarSelfDefined>::new(l);
+                let _r = witness.r;
 
-                // 构造 输入参数
+                let sks: Vec<Secret> = (0..amount).into_iter().map(|_| Secret::random()).collect();
 
-                // 一组 私钥 sks  （模拟每个人的私钥）
-                let sks = generate_sks(amount);
-                // 生成对应的 sks 的公钥集合 pk_vec  （链上获取）
-                let pk_vec: Vec<RistrettoPoint> =
-                    sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-                // sks中，自己拥有的index的位置的 sk_witness  （自己的参数）
+                let pk_vec: Vec<Public> = sks
+                    .clone()
+                    .into_iter()
+                    .map(|sk| {
+                        let pk: Public = sk.into();
+                        pk
+                    })
+                    .collect();
+
                 let sk_witness = sks[l as usize];
 
-                // 现场生成，后面需要
-                let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
+                let rr = ScalarSelfDefined::random_scalar();
 
-                // 此处用链上的 pk_vec 生成 statement ，后面需要
-                let pks: Vec<RistrettoPoint> =
-                    pk_vec.clone().into_iter().map(|each| each - c).collect();
-                let statment: Statement = pks.into();
-                //
+                let rvrfproof = rvrf_prove_ed25519(pk_vec.clone(), sk_witness, rr, l);
 
-                // 链上获取 就是 r 用来计算 prf
-                let rr = get_random_scalar();
-
-                let start = Instant::now();
-                let rvrfproof = rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
-                total_prove += start.elapsed();
-                let len1 = serde_json::to_string(&rvrfproof).unwrap().len();
-                total_size += len1;
-
-                let start = Instant::now();
-                let res = rvrf_verify(rvrfproof, statment, rr);
-                total_verify += start.elapsed();
-                assert_eq!(res, true);
+                let res = rvrf_verfify_ed25519(rvrfproof, pk_vec, rr);
+                assert!(res.is_some());
             }
-            let total_prove_avg = total_prove / samples;
-            let total_verify_avg = total_verify / samples;
-            let total_size_avg = total_size / samples as usize;
-            println!(
-                "amount:{:?},prove:{:?},verify:{:?},size:{:?}",
-                amount, total_prove_avg, total_verify_avg, total_size_avg
-            );
         }
-    }
-
-    #[test]
-    fn rvrf_test() {
-        let l = 6;
-        let witness = Witness::new(l);
-        let r = witness.r;
-        let amount = 15;
-
-        // 构造 输入参数
-        let sks = generate_sks(amount);
-        let pk_vec: Vec<RistrettoPoint> =
-            sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-        let sk_witness = sks[l as usize];
-        let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
-        let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
-        let statment: Statement = pks.into();
-        //
-
-        let crs = CRS::new(get_random_scalar(), r);
-        let rr = get_random_scalar();
-
-        let prover = Prover::new(witness, statment.clone(), crs);
-        let proof = prover.prove(vec![]); //todo!()
-        let proof_prf = PRFProver::prove(sk_witness, rr, get_random_scalar(), -r, c);
-
-        let verifier = Verifier::new(statment, crs);
-        let result = verifier.verify(proof, vec![]);
-        let proof_prf_result = PRFVerifier::verify(proof_prf, get_random_scalar(), rr);
-
-        assert_eq!(result, true);
-        assert_eq!(proof_prf_result, true);
-    }
-
-    #[test]
-    fn rvrf_test_2() {
-        let l = 6;
-        let witness = Witness::new(l);
-        let r = witness.r;
-        let amount = 15;
-
-        // 构造 输入参数
-        let sks = generate_sks(amount);
-        let pk_vec: Vec<RistrettoPoint> =
-            sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-        let sk_witness = sks[l as usize];
-        let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
-        let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
-        let statment: Statement = pks.into();
-        //
-
-        let crs = CRS::new(get_random_scalar(), r);
-        let rr = get_random_scalar();
-
-        // prove
-        let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
-        let prover = Prover::new(witness, statment.clone(), crs);
-        let (proof, hash) = prover.prove_return_hash(hash_vec.clone());
-        let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_pie, t_pie, u, m1, m2, hash);
-
-        //verify
-        let mut hash_vec: Vec<Vec<u8>> = Vec::new();
-        hash_vec.push(point_to_bytes(&m1));
-        hash_vec.push(point_to_bytes(&m2));
-        let verifier = Verifier::new(statment, crs);
-        let result = verifier.verify(proof, hash_vec);
-        let proof_prf_result =
-            PRFVerifier::verify_with_hash(proof_prf, get_random_scalar(), rr, hash);
-
-        assert_eq!(result, true);
-        assert_eq!(proof_prf_result, true);
-    }
-
-    #[test]
-    fn rvrf_test_3() {
-        let l = 6;
-        let witness = Witness::new(l);
-        let r = witness.r;
-        let amount = 15;
-
-        // 构造 输入参数
-        let sks = generate_sks(amount);
-        let pk_vec: Vec<RistrettoPoint> =
-            sks.clone().into_iter().map(|sk| generate_pk(sk)).collect();
-        let sk_witness = sks[l as usize];
-        let c = Com::commit_scalar_2(sk_witness, -r).comm.point;
-        let pks: Vec<RistrettoPoint> = pk_vec.clone().into_iter().map(|each| each - c).collect();
-        let statment: Statement = pks.into();
-        //
-
-        let crs = CRS::new(get_random_scalar(), r);
-        let rr = get_random_scalar();
-
-        let rvrfproof = rvrf_prove(witness, statment.clone(), rr, r, c, sks[l as usize]);
-        let res = rvrf_verify(rvrfproof, statment, rr);
-        assert_eq!(res, true);
-    }
-
-    #[test]
-    fn ooom_test() {
-        let l = 6;
-        let witness = Witness::new(l);
-        let r = witness.r;
-        let amount = 8;
-        let statment = Statement::new(amount, l, r);
-        let crs = CRS::new(get_random_scalar(), r);
-
-        let prover = Prover::new(witness, statment.clone(), crs);
-        let proof = prover.prove(vec![]);
-
-        let verifier = Verifier::new(statment, crs);
-        let result = verifier.verify(proof, vec![]);
-        assert_eq!(result, true);
     }
 }
