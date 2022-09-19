@@ -97,6 +97,7 @@ impl ScalarTrait for ScalarSelfDefined {
 
     #[cfg(feature = "prove")]
     fn random_scalar() -> Self {
+        use rand_sgx::OsRng;
         let mut csprng = OsRng;
         ScalarSelfDefined {
             data: Scalar::random(&mut csprng),
