@@ -95,8 +95,17 @@ impl Neg for ScalarSelfDefined {
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
 
-    #[cfg(feature = "prove")]
+    #[cfg(feature = "std-prove")]
     fn random_scalar() -> Self {
+        let mut csprng = OsRng;
+        ScalarSelfDefined {
+            data: Scalar::random(&mut csprng),
+        }
+    }
+
+    #[cfg(feature = "sgx-prove")]
+    fn random_scalar() -> Self {
+        use rand_sgx::OsRng;
         let mut csprng = OsRng;
         ScalarSelfDefined {
             data: Scalar::random(&mut csprng),

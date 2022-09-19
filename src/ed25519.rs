@@ -114,8 +114,7 @@ impl ScalarTrait for ScalarSelfDefined {
 
     #[cfg(feature = "sgx-prove")]
     fn random_scalar() -> Self {
-        use rand_sgx::OsRng;
-        use rand_sgx::RngCore;
+        use rand_sgx::{OsRng, RngCore};
         let mut csprng = OsRng;
         let mut scalar_bytes = [0u8; 64];
         csprng.fill_bytes(&mut scalar_bytes);
@@ -287,8 +286,8 @@ pub fn intermediary_sk(secret_key: &Secret) -> ScalarSelfDefined {
     let mut hash: [u8; 64] = [0u8; 64];
     let mut digest: [u8; 32] = [0u8; 32];
 
-    h.update(secret_key.0.as_bytes());
-    hash.copy_from_slice(h.finalize().as_slice());
+    h.input(secret_key.0.as_bytes());
+    hash.copy_from_slice(h.result().as_slice());
 
     digest.copy_from_slice(&hash[..32]);
 
@@ -474,22 +473,22 @@ impl ExpandedSecretKey {
         let s: Scalar;
         let k: Scalar;
 
-        h.update(&self.nonce);
-        h.update(&message);
+        h.input(&self.nonce);
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         r = Scalar::from_bytes_mod_order_wide(&output);
 
         R = (&r * &constants::ED25519_BASEPOINT_TABLE).compress();
 
         h = Sha512::new();
-        h.update(R.as_bytes());
-        h.update(public_key.0 .0.compress().as_bytes().to_vec());
-        h.update(&message);
+        h.input(R.as_bytes());
+        h.input(public_key.0 .0.compress().as_bytes().to_vec());
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         k = Scalar::from_bytes_mod_order_wide(&output);
 
         s = (k * self.key) + r;
@@ -505,8 +504,8 @@ impl<'a> From<&'a Secret> for ExpandedSecretKey {
         let mut lower: [u8; 32] = [0u8; 32];
         let mut upper: [u8; 32] = [0u8; 32];
 
-        h.update(secret_key.0.as_bytes());
-        hash.copy_from_slice(h.finalize().as_slice());
+        h.input(secret_key.0.as_bytes());
+        hash.copy_from_slice(h.result().as_slice());
 
         lower.copy_from_slice(&hash[00..32]);
         upper.copy_from_slice(&hash[32..64]);
@@ -543,12 +542,12 @@ impl Public {
         let k: Scalar;
         let minus_A: EdwardsPoint = -self.0 .0;
 
-        h.update(signature.R.as_bytes());
-        h.update(self.0 .0.compress().as_bytes().to_vec());
-        h.update(&message);
+        h.input(signature.R.as_bytes());
+        h.input(self.0 .0.compress().as_bytes().to_vec());
+        h.input(&message);
 
         let mut output = [0u8; 64];
-        output.copy_from_slice(h.finalize().as_slice());
+        output.copy_from_slice(h.result().as_slice());
         k = Scalar::from_bytes_mod_order_wide(&output);
 
         R = EdwardsPoint::vartime_double_scalar_mul_basepoint(&k, &(minus_A), &signature.s);
@@ -567,8 +566,8 @@ impl From<Secret> for Public {
         let mut hash: [u8; 64] = [0u8; 64];
         let mut digest: [u8; 32] = [0u8; 32];
 
-        h.update(s.0.as_bytes());
-        hash.copy_from_slice(h.finalize().as_slice());
+        h.input(s.0.as_bytes());
+        hash.copy_from_slice(h.result().as_slice());
 
         digest.copy_from_slice(&hash[..32]);
 
@@ -601,14 +600,24 @@ fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, String> {
 
 #[test]
 fn sign_test() {
-    let keypair = Keypair::random();
+    use std;
 
+    const c_public:[u8; 32] = [138u8, 136, 227, 221, 116, 9, 241, 149, 253, 82, 219, 45, 60, 186, 93, 114, 202, 103, 9, 191, 29, 148, 18, 27, 243, 116, 136, 1, 180, 15, 111, 92];
+    const c_signature:[u8; 64] = [145u8, 31, 10, 79, 191, 27, 91, 151, 47, 91, 186, 52, 154, 61, 133, 227, 200, 229, 105, 58, 94, 149, 143, 188, 232, 33, 127, 172, 198, 190, 104, 188, 67, 181, 79, 181, 13, 82, 145, 56, 87, 40, 245, 81, 33, 80, 30, 39, 233, 201, 93, 168, 228, 76, 141, 109, 205, 90, 159, 132, 10, 31, 77, 12];
+    
+    let secret = Secret::from_bytes(&[1;32]).unwrap();
+    let keypair = Keypair::from_secret(&secret);
+
+    assert_eq!(keypair.public.as_bytes(), c_public);
+    // std::println!("public: {:?}", keypair.public.as_bytes());
     let message = b"ed25519 signature test";
 
     let sig = keypair.sign(message).unwrap();
     let verify_result = keypair.verify(message, &sig);
 
     assert!(verify_result.is_ok());
+    // std::println!("sig: {:?}", sig.as_bytes());
+    assert_eq!(sig.as_bytes(), c_signature);
 
     let fake_message = b"ed25519 signature test fake";
 

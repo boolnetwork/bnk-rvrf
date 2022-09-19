@@ -7,33 +7,18 @@ edition = "2018"
 
 [dependencies]
 curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", default-features = false, features = ["serde", "alloc", "u64_backend"]}
-sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-sha2 = { version = "0.9", default-features = false }
+sha2 = { version = "0.8", default-features = false }
+sha3 = { version = "0.8", default-features = false }
 p256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 k256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
-#curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+rand = { version = "0.8", default-features = false, features = ["getrandom"], optional = true }
+rand_core = { version = "0.5.1", default-features = false, features = ["getrandom"], optional = true }
 
 rand_sgx = { package = "rand_core", git = "https://github.com/mesalock-linux/rand-sgx", default-features = false , optional = true }
-
-[dependencies.lazy_static]
-version = "1.4.0"
-features = ["spin_no_std"]
-
-[dependencies.rand]
-version = "0.8"
-default-features = false
-features = ["getrandom"]
-optional = true
-
-[dependencies.rand_core]
-version = "0.5.1"
-default-features = false
-features = ["getrandom"]
-optional = true
-
 
 [features]
 default = ["std", "pk256", "std-prove"]
