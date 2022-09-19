@@ -92,12 +92,24 @@ impl Neg for ScalarSelfDefined {
 impl ScalarTrait for ScalarSelfDefined {
     type ScalarType = Scalar;
 
-    #[cfg(feature = "prove")]
+    #[cfg(feature = "std-prove")]
     fn random_scalar() -> Self {
         let mut csprng = OsRng;
         ScalarSelfDefined {
             data: Scalar::random(&mut csprng),
         }
+    }
+
+    #[cfg(feature = "sgx-prove")]
+    fn random_scalar() -> Self {
+        use rand_sgx::{OsRng, RngCore};
+        let mut csprng = OsRng;
+        let mut scalar_bytes = [0u8; 32];
+        csprng.fill_bytes(&mut scalar_bytes);
+        let mut bytes = FieldBytes::default();
+        bytes.copy_from_slice(&scalar_bytes);
+        let res = Scalar::from_repr(bytes).unwrap();
+        ScalarSelfDefined { data: res }
     }
 
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
