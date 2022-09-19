@@ -7,11 +7,11 @@ edition = "2018"
 
 [dependencies]
 curve25519-dalek = { git = "https://github.com/ABMatrix/curve25519-dalek.git", branch = "pub", default-features = false, features = ["serde", "alloc", "u64_backend"]}
-sha3 = { version = "0.8", default-features = false }
 polynomials = { git = "https://github.com/ABMatrix/polynomials.git", branch = "wasm", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 sha2 = { version = "0.8", default-features = false }
+sha3 = { version = "0.8", default-features = false }
 p256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 k256 = { version = "0.8", default-features = false, features = ["ecdsa"], optional = true }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
