@@ -1,5 +1,9 @@
 # rvrf
 
+### Usage
+
+This algorithm proves that the public key corresponding to a private key you have exists in a public list. This process generates a proof that can be verified by all. The proof process also generates a random number to participate in the ranking.
+
 ### Ristretto
 
 #### Use
