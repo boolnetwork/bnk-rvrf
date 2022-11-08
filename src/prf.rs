@@ -42,10 +42,14 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
 
         let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
-        assert_eq!(g_y1_h_y2, m1_c_x);
+        if g_y1_h_y2 != m1_c_x {
+            return false;
+        }
         let u_y1 = u * y1;
-        let m2_v_c = m2 + v * x; //todo() v?
-        assert_eq!(u_y1, m2_v_c);
+        let m2_v_c = m2 + v * x;
+        if u_y1 != m2_v_c {
+            return false;
+        }
         true
     }
 
@@ -63,10 +67,14 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
 
         let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
-        assert_eq!(g_y1_h_y2, m1_c_x);
+        if g_y1_h_y2 != m1_c_x {
+            return false;
+        }
         let u_y1 = u * y1;
         let m2_v_c = m2 + v * x; //todo() v?
-        assert_eq!(u_y1, m2_v_c);
+        if u_y1 != m2_v_c {
+            return false;
+        }
         true
     }
 

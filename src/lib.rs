@@ -3,9 +3,11 @@
 #![allow(warnings)]
 
 #[cfg(all(feature = "std", feature = "mesalock_sgx", target_env = "sgx"))]
-#[macro_use] extern crate std;
+#[macro_use]
+extern crate std;
 #[cfg(all(feature = "std", feature = "mesalock_sgx", not(target_env = "sgx")))]
-#[macro_use] extern crate sgx_tstd as std;
+#[macro_use]
+extern crate sgx_tstd as std;
 
 #[cfg(feature = "rand_sgx")]
 pub extern crate rand_sgx;

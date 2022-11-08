@@ -184,10 +184,10 @@ mod tests {
     #[test]
     fn rvrf_bench_simple_test() {
         use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
-        for amount in 1..5 {
+        for amount in 2..8 {
             let samples = 10;
             for _i in 0..samples {
-                let l = 0;
+                let l = 1;
                 let witness = Witness::<ScalarSelfDefined>::new(l);
                 let _r = witness.r;
 
@@ -205,8 +205,12 @@ mod tests {
 
                 let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
 
-                let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
+                let res = rvrf_verify_simple(rvrfproof, pk_vec.clone(), rr);
                 assert!(res.is_some());
+
+                let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l + 1);
+                let res = rvrf_verify_simple(rvrfproof, pk_vec, rr);
+                assert!(res.is_none());
             }
         }
     }
