@@ -156,21 +156,9 @@ mod tests {
 
     #[test]
     fn kronecker_delta_test() {
-        assert_eq!(
-            kronecker_delta::<ScalarType>(1, 0),
-            ScalarType::zero()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarType>(0, 1),
-            ScalarType::zero()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarType>(1, 1),
-            ScalarType::one()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarType>(0, 0),
-            ScalarType::one()
-        );
+        assert_eq!(kronecker_delta::<ScalarType>(1, 0), ScalarType::zero());
+        assert_eq!(kronecker_delta::<ScalarType>(0, 1), ScalarType::zero());
+        assert_eq!(kronecker_delta::<ScalarType>(1, 1), ScalarType::one());
+        assert_eq!(kronecker_delta::<ScalarType>(0, 0), ScalarType::one());
     }
 }

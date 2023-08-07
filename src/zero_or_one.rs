@@ -186,12 +186,9 @@ mod tests {
             .point;
 
         let left_2 = c * (x - f) + cb;
-        let right_2 = Com::<ScalarType, PointType>::commit_scalar_2(
-            ScalarType::zero(),
-            zb,
-        )
-        .comm
-        .point;
+        let right_2 = Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), zb)
+            .comm
+            .point;
         //  let right_2 = Com::<ScalarType,PointType>::commit_scalar_3(ScalarType::zero(), zb).comm.point;
 
         assert_eq!(left_1, right_1);

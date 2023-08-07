@@ -515,8 +515,7 @@ mod tests {
         let statment = Statement::<ScalarType, PointType>::new(amount, l, r);
         let crs = CRS::<ScalarType, PointType>::new(ScalarTrait::random_scalar(), r);
 
-        let prover =
-            Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
+        let prover = Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -535,8 +534,7 @@ mod tests {
         let statment = Statement::<ScalarType, PointType>::new(amount, l, r);
         let crs = CRS::<ScalarType, PointType>::new(ScalarTrait::random_scalar(), r);
 
-        let prover =
-            Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
+        let prover = Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -550,26 +548,14 @@ mod tests {
         use crate::p256::ScalarType;
         use polynomials::*;
 
-        let a = poly![
-            ScalarType::random_scalar(),
-            ScalarType::random_scalar()
-        ];
-        let b = poly![
-            ScalarType::random_scalar(),
-            ScalarType::random_scalar()
-        ];
+        let a = poly![ScalarType::random_scalar(), ScalarType::random_scalar()];
+        let b = poly![ScalarType::random_scalar(), ScalarType::random_scalar()];
 
         let _c = a * b;
 
         // (x + 1)(2x + 3)(1)(1)(1) = 2x^2 + 5x + 3
-        let a = poly![
-            ScalarType::from_u64(1),
-            ScalarType::from_u64(1)
-        ]; // x + 1
-        let b = poly![
-            ScalarType::from_u64(2),
-            ScalarType::from_u64(3)
-        ]; // 2x + 3
+        let a = poly![ScalarType::from_u64(1), ScalarType::from_u64(1)]; // x + 1
+        let b = poly![ScalarType::from_u64(2), ScalarType::from_u64(3)]; // 2x + 3
         let c = poly![ScalarType::from_u64(1)];
         assert_eq!(
             a * b * c.clone() * c.clone() * c,
@@ -695,10 +681,8 @@ mod tests {
             let fj = ScalarType::from_u64(l_vec[j]) * x + aj_vec[j];
             let _zaj = rj_vec[j] * x + sj_vec[j];
             let _zbj = rj_vec[j] * (x - fj) + tj_vec[j];
-            let _com_rouk = Com::<ScalarType, PointType>::commit_scalar_2(
-                ScalarType::zero(),
-                rouk_vec[j],
-            );
+            let _com_rouk =
+                Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), rouk_vec[j]);
             for i in 0..number_of_public_keys as usize {
                 let cdk = ci_vec_comm[i].comm.point * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
@@ -707,10 +691,8 @@ mod tests {
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::<ScalarType, PointType>::commit_scalar_2(
-                ScalarType::zero(),
-                rouk_vec[j],
-            );
+            let com_rouk =
+                Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), rouk_vec[j]);
             let mut cdk_i = cdk_vec[10 * j] + com_rouk.comm.point;
             //println!("10j = {}", 10 * j);
             for i in 1..number_of_public_keys as usize {
@@ -785,10 +767,7 @@ mod tests {
             rou_k_x_pow_k += rouk_vec[j] * x_pow_n(x, j as u64);
         }
         let zd = x_pow_n(x, binary_j_vec_len as u64) * r - rou_k_x_pow_k;
-        let right = Com::<ScalarType, PointType>::commit_scalar_2(
-            ScalarType::zero(),
-            zd,
-        );
+        let right = Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), zd);
         //println!("right = {:?}", right.comm.point);
 
         if left == right.comm.point {
