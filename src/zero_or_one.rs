@@ -142,7 +142,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+    use crate::ed25519::{PointType, ScalarType};
 
     #[cfg(feature = "pk256")]
     use p256::elliptic_curve::sec1::EncodedPoint;
@@ -152,25 +152,25 @@ mod tests {
     #[test]
     fn zero_or_one_raw_test() {
         // proof
-        let m: ScalarSelfDefined = ScalarTrait::one();
-        let r: ScalarSelfDefined = ScalarTrait::random_scalar();
-        let a: ScalarSelfDefined = ScalarTrait::random_scalar();
-        let s: ScalarSelfDefined = ScalarTrait::random_scalar();
-        let t: ScalarSelfDefined = ScalarTrait::random_scalar();
+        let m: ScalarType = ScalarTrait::one();
+        let r: ScalarType = ScalarTrait::random_scalar();
+        let a: ScalarType = ScalarTrait::random_scalar();
+        let s: ScalarType = ScalarTrait::random_scalar();
+        let t: ScalarType = ScalarTrait::random_scalar();
 
-        let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(m, r)
+        let c = Com::<ScalarType, PointType>::commit_scalar_2(m, r)
             .comm
             .point;
-        let ca = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(a, s);
-        let cb = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(a * m, t);
+        let ca = Com::<ScalarType, PointType>::commit_scalar_2(a, s);
+        let cb = Com::<ScalarType, PointType>::commit_scalar_2(a * m, t);
 
         let mut hash_vec = Vec::new();
-        hash_vec.append(&mut PointSelfDefined::generator().point_to_bytes());
-        hash_vec.append(&mut PointSelfDefined::generator_2().point_to_bytes());
+        hash_vec.append(&mut PointType::generator().point_to_bytes());
+        hash_vec.append(&mut PointType::generator_2().point_to_bytes());
         hash_vec.append(&mut ca.comm.point.point_to_bytes());
         hash_vec.append(&mut cb.comm.point.point_to_bytes());
 
-        let x: ScalarSelfDefined = ScalarTrait::hash_to_scalar(&hash_vec);
+        let x: ScalarType = ScalarTrait::hash_to_scalar(&hash_vec);
 
         let f = m * x + a;
         let ca = ca.comm.point;
@@ -181,18 +181,18 @@ mod tests {
 
         // verify
         let left_1 = c * x + ca;
-        let right_1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(f, za)
+        let right_1 = Com::<ScalarType, PointType>::commit_scalar_2(f, za)
             .comm
             .point;
 
         let left_2 = c * (x - f) + cb;
-        let right_2 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-            ScalarSelfDefined::zero(),
+        let right_2 = Com::<ScalarType, PointType>::commit_scalar_2(
+            ScalarType::zero(),
             zb,
         )
         .comm
         .point;
-        //  let right_2 = Com::<ScalarSelfDefined,PointSelfDefined>::commit_scalar_3(ScalarSelfDefined::zero(), zb).comm.point;
+        //  let right_2 = Com::<ScalarType,PointType>::commit_scalar_3(ScalarType::zero(), zb).comm.point;
 
         assert_eq!(left_1, right_1);
         assert_eq!(left_2, right_2);
@@ -205,8 +205,8 @@ mod tests {
     //     use p256::elliptic_curve::sec1::FromEncodedPoint;
     //     use p256::ProjectivePoint;
     //
-    //     let a: ScalarSelfDefined = ScalarTrait::zero();
-    //     let b: PointSelfDefined = PointTrait::generator_2();
+    //     let a: ScalarType = ScalarTrait::zero();
+    //     let b: PointType = PointTrait::generator_2();
     //     let aa = &EncodedPoint::from((a * b).data);
     //     let bb = AffinePoint::from_encoded_point(aa).unwrap();
     //     let _cc = ProjectivePoint::from(bb);
@@ -215,8 +215,8 @@ mod tests {
     #[cfg(feature = "pk256")]
     #[test]
     fn zero_or_one_p256_test() {
-        let m: ScalarSelfDefined = ScalarTrait::zero();
-        let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
+        let m: ScalarType = ScalarTrait::zero();
+        let p = Prover::<ScalarType, PointType>::new(m);
 
         let proof = p.proof();
 
@@ -227,9 +227,9 @@ mod tests {
 
     #[test]
     fn zero_or_one_ed25519_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
-        let m: ScalarSelfDefined = ScalarTrait::zero();
-        let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
+        use crate::ed25519::{PointType, ScalarType};
+        let m: ScalarType = ScalarTrait::zero();
+        let p = Prover::<ScalarType, PointType>::new(m);
 
         let proof = p.proof();
 
@@ -241,9 +241,9 @@ mod tests {
     #[cfg(feature = "pk256")]
     #[test]
     fn zero_or_one_secp256k1_test() {
-        use crate::secp256k1::{PointSelfDefined, ScalarSelfDefined};
-        let m: ScalarSelfDefined = ScalarTrait::zero();
-        let p = Prover::<ScalarSelfDefined, PointSelfDefined>::new(m);
+        use crate::secp256k1::{PointType, ScalarType};
+        let m: ScalarType = ScalarTrait::zero();
+        let p = Prover::<ScalarType, PointType>::new(m);
 
         let proof = p.proof();
 

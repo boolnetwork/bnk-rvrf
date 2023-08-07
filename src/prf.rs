@@ -179,7 +179,7 @@ impl<S: ScalarTrait, P: PointTrait> PRFPoof<S, P> {
 mod tests {
     use super::*;
 
-    use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+    use crate::ed25519::{PointType, ScalarType};
 
     pub fn prf_h_2<S: ScalarTrait, P: PointTrait>(input: S) -> P {
         P::hash_to_point(&input.bytes())
@@ -187,23 +187,23 @@ mod tests {
 
     #[test]
     fn p_test() {
-        let sk = ScalarSelfDefined::random_scalar();
-        let r = ScalarSelfDefined::random_scalar();
-        let x = ScalarSelfDefined::random_scalar();
-        let u = prf_h_2::<ScalarSelfDefined, PointSelfDefined>(r);
+        let sk = ScalarType::random_scalar();
+        let r = ScalarType::random_scalar();
+        let x = ScalarType::random_scalar();
+        let u = prf_h_2::<ScalarType, PointType>(r);
 
-        let t = ScalarSelfDefined::random_scalar();
+        let t = ScalarType::random_scalar();
 
-        let s_pie = ScalarSelfDefined::random_scalar();
-        let t_pie = ScalarSelfDefined::random_scalar();
+        let s_pie = ScalarType::random_scalar();
+        let t_pie = ScalarType::random_scalar();
 
-        let _m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
+        let _m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_pie, t_pie)
             .comm
             .point;
         let _m2 = s_pie * u;
         let _y1 = s_pie + sk * x;
         let _y2 = t_pie + t * x;
-        let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(sk, t)
+        let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
             .comm
             .point;
 
@@ -214,17 +214,17 @@ mod tests {
 
     #[test]
     fn prf_test() {
-        let sk = ScalarSelfDefined::random_scalar();
-        let r = ScalarSelfDefined::random_scalar();
-        let x = ScalarSelfDefined::random_scalar();
-        let u = prf_h_2::<ScalarSelfDefined, PointSelfDefined>(r);
+        let sk = ScalarType::random_scalar();
+        let r = ScalarType::random_scalar();
+        let x = ScalarType::random_scalar();
+        let u = prf_h_2::<ScalarType, PointType>(r);
 
-        let t = ScalarSelfDefined::random_scalar();
+        let t = ScalarType::random_scalar();
 
-        let s_pie = ScalarSelfDefined::random_scalar();
-        let t_pie = ScalarSelfDefined::random_scalar();
+        let s_pie = ScalarType::random_scalar();
+        let t_pie = ScalarType::random_scalar();
 
-        let m1 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(s_pie, t_pie)
+        let m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_pie, t_pie)
             .comm
             .point;
         let m2 = s_pie * u;
@@ -232,11 +232,11 @@ mod tests {
         let y2 = t_pie + t * x;
 
         let v = sk * u; // todo()
-        let c = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(sk, t)
+        let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
             .comm
             .point;
 
-        let g_y1_h_y2 = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(y1, y2)
+        let g_y1_h_y2 = Com::<ScalarType, PointType>::commit_scalar_2(y1, y2)
             .comm
             .point;
         let m1_c_x = m1 + c * x;
@@ -248,12 +248,12 @@ mod tests {
 
     // #[test]
     // fn curve25519_sk_pk_ed25519_test() {
-    //     use crate::ed25519::ScalarSelfDefined;
+    //     use crate::ed25519::ScalarType;
     //
     //     use ed25519_dalek::{Keypair, PublicKey, SecretKey};
     //     use ed25519_dalek::{Signer, Verifier};
     //
-    //     let sk = ScalarSelfDefined::random_scalar();
+    //     let sk = ScalarType::random_scalar();
     //
     //     let sk = SecretKey::from_bytes(&sk.bytes()).unwrap();
     //     let pk: PublicKey = (&sk).into();

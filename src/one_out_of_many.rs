@@ -507,16 +507,16 @@ mod tests {
 
     #[test]
     fn ooom_ed25519_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{PointType, ScalarType};
         let l = 5;
-        let witness = Witness::<ScalarSelfDefined>::new(l);
+        let witness = Witness::<ScalarType>::new(l);
         let r = witness.r;
         let amount = 10;
-        let statment = Statement::<ScalarSelfDefined, PointSelfDefined>::new(amount, l, r);
-        let crs = CRS::<ScalarSelfDefined, PointSelfDefined>::new(ScalarTrait::random_scalar(), r);
+        let statment = Statement::<ScalarType, PointType>::new(amount, l, r);
+        let crs = CRS::<ScalarType, PointType>::new(ScalarTrait::random_scalar(), r);
 
         let prover =
-            Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
+            Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -527,16 +527,16 @@ mod tests {
     #[cfg(feature = "pk256")]
     #[test]
     fn ooom_p256_test() {
-        use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::p256::{PointType, ScalarType};
         let l = 5;
-        let witness = Witness::<ScalarSelfDefined>::new(l);
+        let witness = Witness::<ScalarType>::new(l);
         let r = witness.r;
         let amount = 10;
-        let statment = Statement::<ScalarSelfDefined, PointSelfDefined>::new(amount, l, r);
-        let crs = CRS::<ScalarSelfDefined, PointSelfDefined>::new(ScalarTrait::random_scalar(), r);
+        let statment = Statement::<ScalarType, PointType>::new(amount, l, r);
+        let crs = CRS::<ScalarType, PointType>::new(ScalarTrait::random_scalar(), r);
 
         let prover =
-            Prover::<ScalarSelfDefined, PointSelfDefined>::new(witness, statment.clone(), crs);
+            Prover::<ScalarType, PointType>::new(witness, statment.clone(), crs);
         let proof = prover.prove(vec![]);
 
         let verifier = Verifier::new(statment, crs);
@@ -547,36 +547,36 @@ mod tests {
     #[cfg(feature = "pk256")]
     #[test]
     fn poly_test() {
-        use crate::p256::ScalarSelfDefined;
+        use crate::p256::ScalarType;
         use polynomials::*;
 
         let a = poly![
-            ScalarSelfDefined::random_scalar(),
-            ScalarSelfDefined::random_scalar()
+            ScalarType::random_scalar(),
+            ScalarType::random_scalar()
         ];
         let b = poly![
-            ScalarSelfDefined::random_scalar(),
-            ScalarSelfDefined::random_scalar()
+            ScalarType::random_scalar(),
+            ScalarType::random_scalar()
         ];
 
         let _c = a * b;
 
         // (x + 1)(2x + 3)(1)(1)(1) = 2x^2 + 5x + 3
         let a = poly![
-            ScalarSelfDefined::from_u64(1),
-            ScalarSelfDefined::from_u64(1)
+            ScalarType::from_u64(1),
+            ScalarType::from_u64(1)
         ]; // x + 1
         let b = poly![
-            ScalarSelfDefined::from_u64(2),
-            ScalarSelfDefined::from_u64(3)
+            ScalarType::from_u64(2),
+            ScalarType::from_u64(3)
         ]; // 2x + 3
-        let c = poly![ScalarSelfDefined::from_u64(1)];
+        let c = poly![ScalarType::from_u64(1)];
         assert_eq!(
             a * b * c.clone() * c.clone() * c,
             poly![
-                ScalarSelfDefined::from_u64(2),
-                ScalarSelfDefined::from_u64(5),
-                ScalarSelfDefined::from_u64(3)
+                ScalarType::from_u64(2),
+                ScalarType::from_u64(5),
+                ScalarType::from_u64(3)
             ]
         );
     }
@@ -605,8 +605,8 @@ mod tests {
 
     #[test]
     fn a_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
-        //use crate::p256::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{PointType, ScalarType};
+        //use crate::p256::{PointType, ScalarType};
 
         let number_of_public_keys = 10u64;
         let binary_j_vec = number_to_binary(number_of_public_keys);
@@ -615,45 +615,45 @@ mod tests {
         // 假设 一共10commit（0..9） 其中 index为l（5）个是0
         let l_vec = fix_len_binary(5, number_of_public_keys);
         //println!("l_vec = {:?}", l_vec);
-        let mut ci_vec = generate_sks::<ScalarSelfDefined, PointSelfDefined>(10);
+        let mut ci_vec = generate_sks::<ScalarType, PointType>(10);
         // index =  0 1 2 3 4 5 6 7 8 9
-        ci_vec[5] = ScalarSelfDefined::zero();
+        ci_vec[5] = ScalarType::zero();
 
-        let mut rj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut aj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut sj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut tj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let mut rouk_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let mut rj_vec: Vec<ScalarType> = Vec::new();
+        let mut aj_vec: Vec<ScalarType> = Vec::new();
+        let mut sj_vec: Vec<ScalarType> = Vec::new();
+        let mut tj_vec: Vec<ScalarType> = Vec::new();
+        let mut rouk_vec: Vec<ScalarType> = Vec::new();
 
-        let _clj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let _caj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let _cbj_vec: Vec<ScalarSelfDefined> = Vec::new();
-        let _cdk_vec: Vec<ScalarSelfDefined> = Vec::new();
+        let _clj_vec: Vec<ScalarType> = Vec::new();
+        let _caj_vec: Vec<ScalarType> = Vec::new();
+        let _cbj_vec: Vec<ScalarType> = Vec::new();
+        let _cdk_vec: Vec<ScalarType> = Vec::new();
 
         for j in 0..binary_j_vec_len {
-            let rj = ScalarSelfDefined::random_scalar();
+            let rj = ScalarType::random_scalar();
             rj_vec.push(rj);
-            let aj = ScalarSelfDefined::random_scalar();
+            let aj = ScalarType::random_scalar();
             aj_vec.push(aj);
-            let sj = ScalarSelfDefined::random_scalar();
+            let sj = ScalarType::random_scalar();
             sj_vec.push(sj);
-            let tj = ScalarSelfDefined::random_scalar();
+            let tj = ScalarType::random_scalar();
             tj_vec.push(tj);
-            let rouk = ScalarSelfDefined::random_scalar();
+            let rouk = ScalarType::random_scalar();
             rouk_vec.push(rouk);
-            let _clj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-                ScalarSelfDefined::from_u64(l_vec[j as usize]),
+            let _clj = Com::<ScalarType, PointType>::commit_scalar_2(
+                ScalarType::from_u64(l_vec[j as usize]),
                 rj,
             );
-            let _caj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(aj, sj);
-            let _cbj = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-                ScalarSelfDefined::from_u64(l_vec[j as usize]) * aj,
+            let _caj = Com::<ScalarType, PointType>::commit_scalar_2(aj, sj);
+            let _cbj = Com::<ScalarType, PointType>::commit_scalar_2(
+                ScalarType::from_u64(l_vec[j as usize]) * aj,
                 tj,
             );
         }
 
-        let mut f_i_j_poly: Vec<Polynomial<ScalarSelfDefined>> = Vec::new();
-        let mut p_i_k: Vec<Vec<ScalarSelfDefined>> = Vec::new();
+        let mut f_i_j_poly: Vec<Polynomial<ScalarType>> = Vec::new();
+        let mut p_i_k: Vec<Vec<ScalarType>> = Vec::new();
         // for each i : 得到除了x^n以外所有x^0..x^n-1的系数 ai,k k=0..n-1
         for i in 0..number_of_public_keys {
             // 让i变成2进制binary格式，长度不够前面填充0
@@ -661,7 +661,7 @@ mod tests {
             //println!("i_vec = {:?}", i_vec);
             let n = i_vec.len();
             //println!("each i = {}, lenth of i/n = {}", i, n);
-            let mut f_j_ij_mul = poly![ScalarSelfDefined::from_u64(1u64)];
+            let mut f_j_ij_mul = poly![ScalarType::from_u64(1u64)];
             for j in 0..n {
                 let f_j_ij = if i_vec[j] == 0 {
                     //poly![kronecker_delta(0, l_vec[j]), -aj_vec[j]]
@@ -673,7 +673,7 @@ mod tests {
                 f_j_ij_mul *= f_j_ij;
             }
             f_i_j_poly.push(f_j_ij_mul.clone());
-            let coefficients: Vec<ScalarSelfDefined> = f_j_ij_mul.into();
+            let coefficients: Vec<ScalarType> = f_j_ij_mul.into();
             //coefficients.reverse();
             //println!("coefficients(X^n+...+x^0) = {:?}", coefficients);
             p_i_k.push(coefficients);
@@ -681,22 +681,22 @@ mod tests {
         let _test = p_i_k.index(4).index(1);
         //println!("test coefficients(X^n+...+x^0) = {:?}", test);
 
-        let x = ScalarSelfDefined::random_scalar();
-        let r = ScalarSelfDefined::random_scalar();
+        let x = ScalarType::random_scalar();
+        let r = ScalarType::random_scalar();
 
         let mut ci_vec_comm = Vec::new();
         for i in 0..number_of_public_keys as usize {
-            let ci = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(ci_vec[i], r);
+            let ci = Com::<ScalarType, PointType>::commit_scalar_2(ci_vec[i], r);
             ci_vec_comm.push(ci.clone());
         }
 
         let mut cdk_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let fj = ScalarSelfDefined::from_u64(l_vec[j]) * x + aj_vec[j];
+            let fj = ScalarType::from_u64(l_vec[j]) * x + aj_vec[j];
             let _zaj = rj_vec[j] * x + sj_vec[j];
             let _zbj = rj_vec[j] * (x - fj) + tj_vec[j];
-            let _com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-                ScalarSelfDefined::zero(),
+            let _com_rouk = Com::<ScalarType, PointType>::commit_scalar_2(
+                ScalarType::zero(),
                 rouk_vec[j],
             );
             for i in 0..number_of_public_keys as usize {
@@ -707,8 +707,8 @@ mod tests {
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-                ScalarSelfDefined::zero(),
+            let com_rouk = Com::<ScalarType, PointType>::commit_scalar_2(
+                ScalarType::zero(),
                 rouk_vec[j],
             );
             let mut cdk_i = cdk_vec[10 * j] + com_rouk.comm.point;
@@ -729,14 +729,14 @@ mod tests {
         // lj aj 来组成 fj
         let mut fj_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let fj = ScalarSelfDefined::from_u64(l_vec[j]) * x + aj_vec[j];
+            let fj = ScalarType::from_u64(l_vec[j]) * x + aj_vec[j];
             fj_vec.push(fj);
         }
-        let mut ci_pow_fji_2 = PointSelfDefined::default();
+        let mut ci_pow_fji_2 = PointType::default();
         for i in 0..number_of_public_keys {
             let i_vec = fix_len_binary(i, number_of_public_keys);
             let n = i_vec.len();
-            let mut each_f_j_ij = ScalarSelfDefined::one();
+            let mut each_f_j_ij = ScalarType::one();
             for j in 0..n {
                 let f_j_ij = if i_vec[j] == 0 {
                     x - fj_vec[j]
@@ -747,12 +747,12 @@ mod tests {
             }
             ci_pow_fji_2 += ci_vec_comm[i as usize].comm.point * each_f_j_ij;
         }
-        ci_pow_fji_2 -= PointSelfDefined::default();
+        ci_pow_fji_2 -= PointType::default();
         assert_eq!(ci_pow_fji, ci_pow_fji_2);
         //
 
         // 系数 x 测试
-        let mut bbb = *p_i_k.index(4).index(0) * ScalarSelfDefined::one();
+        let mut bbb = *p_i_k.index(4).index(0) * ScalarType::one();
         for j in 1..(binary_j_vec_len + 1) as usize {
             bbb += *p_i_k.index(4).index(j) * x_pow_n(x, j as u64);
         }
@@ -761,18 +761,18 @@ mod tests {
         //println!("bbbccc = {:?}", ccc);
         //
         // 计算中间过程来验证：
-        let mut xxxx = PointSelfDefined::default();
+        let mut xxxx = PointType::default();
         for i in 0..number_of_public_keys as usize {
             for j in 0..binary_j_vec_len as usize {
                 xxxx += ci_vec_comm[i].comm.point * p_i_k.index(i).index(j) * x_pow_n(x, j as u64);
             }
         }
         xxxx += ci_vec_comm[5].comm.point * x_pow_n(x, binary_j_vec_len + 1);
-        xxxx -= PointSelfDefined::default();
+        xxxx -= PointType::default();
         //println!("xxxx = {:?}", xxxx);
 
         //println!("cdk_vec len = {:?}", cdk_vec.len());
-        let mut cd_k_xk = cdk_add_vec[0] * (-ScalarSelfDefined::one());
+        let mut cd_k_xk = cdk_add_vec[0] * (-ScalarType::one());
         for j in 1..binary_j_vec_len as usize {
             cd_k_xk += cdk_add_vec[j] * (-x_pow_n(x, j as u64));
         }
@@ -780,13 +780,13 @@ mod tests {
         let left = ci_pow_fji + cd_k_xk;
         //println!("left = {:?}", left);
 
-        let mut rou_k_x_pow_k = rouk_vec[0] * ScalarSelfDefined::one();
+        let mut rou_k_x_pow_k = rouk_vec[0] * ScalarType::one();
         for j in 1..binary_j_vec_len as usize {
             rou_k_x_pow_k += rouk_vec[j] * x_pow_n(x, j as u64);
         }
         let zd = x_pow_n(x, binary_j_vec_len as u64) * r - rou_k_x_pow_k;
-        let right = Com::<ScalarSelfDefined, PointSelfDefined>::commit_scalar_2(
-            ScalarSelfDefined::zero(),
+        let right = Com::<ScalarType, PointType>::commit_scalar_2(
+            ScalarType::zero(),
             zd,
         );
         //println!("right = {:?}", right.comm.point);

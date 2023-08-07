@@ -135,7 +135,7 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ed25519::ScalarSelfDefined;
+    use crate::ed25519::ScalarType;
     #[test]
     fn number_to_binary_test() {
         let _a = number_to_binary(50);
@@ -150,27 +150,27 @@ mod tests {
 
     #[test]
     fn x_pow_n_test() {
-        let b = x_pow_n(ScalarSelfDefined::from_u64(3u64), 8);
-        assert_eq!(b, ScalarSelfDefined::from_u64(6561u64));
+        let b = x_pow_n(ScalarType::from_u64(3u64), 8);
+        assert_eq!(b, ScalarType::from_u64(6561u64));
     }
 
     #[test]
     fn kronecker_delta_test() {
         assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(1, 0),
-            ScalarSelfDefined::zero()
+            kronecker_delta::<ScalarType>(1, 0),
+            ScalarType::zero()
         );
         assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(0, 1),
-            ScalarSelfDefined::zero()
+            kronecker_delta::<ScalarType>(0, 1),
+            ScalarType::zero()
         );
         assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(1, 1),
-            ScalarSelfDefined::one()
+            kronecker_delta::<ScalarType>(1, 1),
+            ScalarType::one()
         );
         assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(0, 0),
-            ScalarSelfDefined::one()
+            kronecker_delta::<ScalarType>(0, 0),
+            ScalarType::one()
         );
     }
 }

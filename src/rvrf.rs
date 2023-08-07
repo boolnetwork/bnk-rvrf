@@ -155,11 +155,11 @@ pub mod ed25519 {
     pub fn rvrf_prove_ed25519(
         public_keys: Vec<Public>,
         secret_key: Secret,
-        rand: ScalarSelfDefined,
+        rand: ScalarType,
         index: u64,
-    ) -> RVRFProof<ScalarSelfDefined, PointSelfDefined> {
+    ) -> RVRFProof<ScalarType, PointType> {
         let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
-        rvrf_prove_simple::<ScalarSelfDefined, PointSelfDefined>(
+        rvrf_prove_simple::<ScalarType, PointType>(
             pubkeys,
             intermediary_sk(&secret_key),
             rand,
@@ -168,12 +168,12 @@ pub mod ed25519 {
     }
 
     pub fn rvrf_verfify_ed25519(
-        rvrfproof: RVRFProof<ScalarSelfDefined, PointSelfDefined>,
+        rvrfproof: RVRFProof<ScalarType, PointType>,
         public_keys: Vec<Public>,
-        rand: ScalarSelfDefined,
-    ) -> Option<PointSelfDefined> {
+        rand: ScalarType,
+    ) -> Option<PointType> {
         let pubkeys = ed25519pubkey_to_ristrettopoint(public_keys);
-        rvrf_verify_simple::<ScalarSelfDefined, PointSelfDefined>(rvrfproof, pubkeys, rand)
+        rvrf_verify_simple::<ScalarType, PointType>(rvrfproof, pubkeys, rand)
     }
 }
 
@@ -183,25 +183,25 @@ mod tests {
 
     #[test]
     fn rvrf_bench_simple_test() {
-        use crate::ed25519::{PointSelfDefined, ScalarSelfDefined};
+        use crate::ed25519::{PointType, ScalarType};
         for amount in 2..8 {
             let samples = 10;
             for _i in 0..samples {
                 let l = 1;
-                let witness = Witness::<ScalarSelfDefined>::new(l);
+                let witness = Witness::<ScalarType>::new(l);
                 let _r = witness.r;
 
-                let sks = generate_sks::<ScalarSelfDefined, PointSelfDefined>(amount);
+                let sks = generate_sks::<ScalarType, PointType>(amount);
 
-                let pk_vec: Vec<PointSelfDefined> = sks
+                let pk_vec: Vec<PointType> = sks
                     .clone()
                     .into_iter()
-                    .map(generate_pk::<ScalarSelfDefined, PointSelfDefined>)
+                    .map(generate_pk::<ScalarType, PointType>)
                     .collect();
 
                 let sk_witness = sks[l as usize];
 
-                let rr = ScalarSelfDefined::random_scalar();
+                let rr = ScalarType::random_scalar();
 
                 let rvrfproof = rvrf_prove_simple(pk_vec.clone(), sk_witness, rr, l);
 
@@ -223,7 +223,7 @@ mod tests {
             let samples = 10;
             for _i in 0..samples {
                 let l = 0;
-                let witness = Witness::<ScalarSelfDefined>::new(l);
+                let witness = Witness::<ScalarType>::new(l);
                 let _r = witness.r;
 
                 let sks: Vec<Secret> = (0..amount).into_iter().map(|_| Secret::random()).collect();
@@ -239,7 +239,7 @@ mod tests {
 
                 let sk_witness = sks[l as usize];
 
-                let rr = ScalarSelfDefined::random_scalar();
+                let rr = ScalarType::random_scalar();
 
                 let rvrfproof = rvrf_prove_ed25519(pk_vec.clone(), sk_witness, rr, l);
 
