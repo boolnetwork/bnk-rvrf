@@ -67,10 +67,10 @@ pub fn rvrf_prove<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Ou
 ) -> RVRFProof<S, P> {
     let crs = CRS::new(S::random_scalar(), S::random_scalar());
     let sk_witness = sk;
-    let (u, m1, m2, s_pie, t_pie, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
+    let (u, m1, m2, s_prime, t_prime, hash_vec) = PRFProver::prove_step_one(sk_witness, rr);
     let prover = Prover::new(witness, statement, crs);
     let (proof, hash) = prover.prove_return_hash(hash_vec);
-    let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_pie, t_pie, u, m1, m2, hash);
+    let proof_prf = PRFProver::prove_step_two(sk_witness, -r, c, s_prime, t_prime, u, m1, m2, hash);
     RVRFProof {
         m1,
         m2,

@@ -87,19 +87,19 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
     pub fn prove(sk: S, r: S, _x: S, t: S, c: P) -> PRFPoof<S, P> {
         let u = Self::prf_h_2(r);
 
-        let s_pie = S::random_scalar();
-        let t_pie = S::random_scalar();
+        let s_prime = S::random_scalar();
+        let t_prime = S::random_scalar();
 
-        let m1 = Com::commit_scalar_2(s_pie, t_pie).comm.point;
-        let m2 = s_pie * u;
+        let m1 = Com::commit_scalar_2(s_prime, t_prime).comm.point;
+        let m2 = s_prime * u;
 
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut P::point_to_bytes(&m1));
         hash_vec.append(&mut P::point_to_bytes(&m2));
         let x = S::hash_to_scalar(&hash_vec);
 
-        let y1 = s_pie + sk * x;
-        let y2 = t_pie + t * x;
+        let y1 = s_prime + sk * x;
+        let y2 = t_prime + t * x;
 
         let v = sk * u;
         PRFPoof {
@@ -115,25 +115,25 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
     pub fn prove_step_one(_sk: S, r: S) -> (P, P, P, S, S, Vec<Vec<u8>>) {
         let u = Self::prf_h_2(r);
 
-        let s_pie = S::random_scalar();
-        let t_pie = S::random_scalar();
+        let s_prime = S::random_scalar();
+        let t_prime = S::random_scalar();
 
-        let m1 = Com::commit_scalar_2(s_pie, t_pie).comm.point;
-        let m2 = s_pie * u;
+        let m1 = Com::commit_scalar_2(s_prime, t_prime).comm.point;
+        let m2 = s_prime * u;
 
         let mut hash_vec: Vec<Vec<u8>> = Vec::new();
         hash_vec.push(P::point_to_bytes(&m1));
         hash_vec.push(P::point_to_bytes(&m2));
 
-        (u, m1, m2, s_pie, t_pie, hash_vec)
+        (u, m1, m2, s_prime, t_prime, hash_vec)
     }
 
     pub fn prove_step_two(
         sk: S,
         t: S,
         c: P,
-        s_pie: S,
-        t_pie: S,
+        s_prime: S,
+        t_prime: S,
         u: P,
         m1: P,
         m2: P,
@@ -141,8 +141,8 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
     ) -> PRFPoof<S, P> {
         let x = hash;
 
-        let y1 = s_pie + sk * x;
-        let y2 = t_pie + t * x;
+        let y1 = s_prime + sk * x;
+        let y2 = t_prime + t * x;
 
         let v = sk * u;
         PRFPoof {
@@ -194,15 +194,15 @@ mod tests {
 
         let t = ScalarType::random_scalar();
 
-        let s_pie = ScalarType::random_scalar();
-        let t_pie = ScalarType::random_scalar();
+        let s_prime = ScalarType::random_scalar();
+        let t_prime = ScalarType::random_scalar();
 
-        let _m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_pie, t_pie)
+        let _m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_prime, t_prime)
             .comm
             .point;
-        let _m2 = s_pie * u;
-        let _y1 = s_pie + sk * x;
-        let _y2 = t_pie + t * x;
+        let _m2 = s_prime * u;
+        let _y1 = s_prime + sk * x;
+        let _y2 = t_prime + t * x;
         let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
             .comm
             .point;
@@ -221,15 +221,15 @@ mod tests {
 
         let t = ScalarType::random_scalar();
 
-        let s_pie = ScalarType::random_scalar();
-        let t_pie = ScalarType::random_scalar();
+        let s_prime = ScalarType::random_scalar();
+        let t_prime = ScalarType::random_scalar();
 
-        let m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_pie, t_pie)
+        let m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_prime, t_prime)
             .comm
             .point;
-        let m2 = s_pie * u;
-        let y1 = s_pie + sk * x;
-        let y2 = t_pie + t * x;
+        let m2 = s_prime * u;
+        let y1 = s_prime + sk * x;
+        let y2 = t_prime + t * x;
 
         let v = sk * u; // todo()
         let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
