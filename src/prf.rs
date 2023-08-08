@@ -40,7 +40,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
         hash_vec.append(&mut P::point_to_bytes(&m2));
         let x = S::hash_to_scalar(&hash_vec);
 
-        let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
+        let g_y1_h_y2 = Com::<S, P>::commit_scalar_with(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
         if g_y1_h_y2 != m1_c_x {
             return false;
@@ -65,7 +65,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
         let u = Self::prf_h_2(r);
         let x = hash;
 
-        let g_y1_h_y2 = Com::<S, P>::commit_scalar_2(y1, y2).comm.point;
+        let g_y1_h_y2 = Com::<S, P>::commit_scalar_with(y1, y2).comm.point;
         let m1_c_x = m1 + c * x;
         if g_y1_h_y2 != m1_c_x {
             return false;
@@ -90,7 +90,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
         let s_prime = S::random_scalar();
         let t_prime = S::random_scalar();
 
-        let m1 = Com::commit_scalar_2(s_prime, t_prime).comm.point;
+        let m1 = Com::commit_scalar_with(s_prime, t_prime).comm.point;
         let m2 = s_prime * u;
 
         let mut hash_vec = Vec::new();
@@ -118,7 +118,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> PR
         let s_prime = S::random_scalar();
         let t_prime = S::random_scalar();
 
-        let m1 = Com::commit_scalar_2(s_prime, t_prime).comm.point;
+        let m1 = Com::commit_scalar_with(s_prime, t_prime).comm.point;
         let m2 = s_prime * u;
 
         let mut hash_vec: Vec<Vec<u8>> = Vec::new();
@@ -197,13 +197,13 @@ mod tests {
         let s_prime = ScalarType::random_scalar();
         let t_prime = ScalarType::random_scalar();
 
-        let _m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_prime, t_prime)
+        let _m1 = Com::<ScalarType, PointType>::commit_scalar_with(s_prime, t_prime)
             .comm
             .point;
         let _m2 = s_prime * u;
         let _y1 = s_prime + sk * x;
         let _y2 = t_prime + t * x;
-        let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
+        let c = Com::<ScalarType, PointType>::commit_scalar_with(sk, t)
             .comm
             .point;
 
@@ -224,7 +224,7 @@ mod tests {
         let s_prime = ScalarType::random_scalar();
         let t_prime = ScalarType::random_scalar();
 
-        let m1 = Com::<ScalarType, PointType>::commit_scalar_2(s_prime, t_prime)
+        let m1 = Com::<ScalarType, PointType>::commit_scalar_with(s_prime, t_prime)
             .comm
             .point;
         let m2 = s_prime * u;
@@ -232,11 +232,11 @@ mod tests {
         let y2 = t_prime + t * x;
 
         let v = sk * u; // todo()
-        let c = Com::<ScalarType, PointType>::commit_scalar_2(sk, t)
+        let c = Com::<ScalarType, PointType>::commit_scalar_with(sk, t)
             .comm
             .point;
 
-        let g_y1_h_y2 = Com::<ScalarType, PointType>::commit_scalar_2(y1, y2)
+        let g_y1_h_y2 = Com::<ScalarType, PointType>::commit_scalar_with(y1, y2)
             .comm
             .point;
         let m1_c_x = m1 + c * x;

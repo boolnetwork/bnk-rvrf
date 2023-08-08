@@ -2,10 +2,10 @@ use crate::one_out_of_many::*;
 #[cfg(feature = "prove")]
 use crate::prf::PRFProver;
 #[cfg(feature = "prove")]
-use crate::util::generate_sks;
+use crate::util::generate_secret_keys;
 
 #[cfg(feature = "prove")]
-use crate::util::{generate_pk, Com};
+use crate::util::{generate_public_key, Com};
 
 use crate::prf::{PRFPoof, PRFVerifier};
 
@@ -25,10 +25,10 @@ pub struct VRFStatement<S: ScalarTrait, P: PointTrait> {
 #[cfg(feature = "prove")]
 impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> VRFStatement<S, P> {
     pub fn new(amount: u64, r: S) -> Self {
-        let sks = generate_sks::<S, P>(amount);
+        let sks = generate_secret_keys::<S, P>(amount);
         let pk_vec: Vec<P> = sks
             .into_iter()
-            .map(|sk| Com::<S, P>::commit_scalar_2(sk, r).comm.point)
+            .map(|sk| Com::<S, P>::commit_scalar_with(sk, r).comm.point)
             .collect();
 
         Self {
@@ -39,11 +39,11 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> VR
 }
 
 #[cfg(feature = "prove")]
-pub fn generate_pks<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+pub fn generate_public_keys<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     amount: u64,
 ) -> Vec<P> {
-    let sks = generate_sks::<S, P>(amount);
-    let pk_vec: Vec<P> = sks.into_iter().map(generate_pk).collect();
+    let sks = generate_secret_keys::<S, P>(amount);
+    let pk_vec: Vec<P> = sks.into_iter().map(generate_public_key).collect();
     pk_vec
 }
 
@@ -121,7 +121,7 @@ pub fn rvrf_prove_simple<
     let l = index;
     let witness = Witness::<S>::new(l);
     let r = witness.r;
-    let c = Com::<S, P>::commit_scalar_2(secret_key, -r).comm.point;
+    let c = Com::<S, P>::commit_scalar_with(secret_key, -r).comm.point;
 
     let pks: Vec<P> = public_keys.into_iter().map(|each| each - c).collect();
     let statement: Statement<S, P> = pks.into();
@@ -191,12 +191,12 @@ mod tests {
                 let witness = Witness::<ScalarType>::new(l);
                 let _r = witness.r;
 
-                let sks = generate_sks::<ScalarType, PointType>(amount);
+                let sks = generate_secret_keys::<ScalarType, PointType>(amount);
 
                 let pk_vec: Vec<PointType> = sks
                     .clone()
                     .into_iter()
-                    .map(generate_pk::<ScalarType, PointType>)
+                    .map(generate_public_key::<ScalarType, PointType>)
                     .collect();
 
                 let sk_witness = sks[l as usize];

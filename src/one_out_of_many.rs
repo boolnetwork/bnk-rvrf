@@ -1,12 +1,12 @@
 #[cfg(feature = "prove")]
-use crate::util::{generate_sks, kronecker_delta};
+use crate::util::{generate_secret_keys, kronecker_delta};
 #[cfg(feature = "prove")]
 use crate::zero_or_one::Prover as ZOProver;
 #[cfg(feature = "prove")]
 use polynomials::*;
 // #[cfg(feature = "prove")]
 // use std::ops::Index;
-use crate::util::{fix_len_binary, number_to_binary};
+use crate::util::{get_fixed_length_binary, number_to_binary};
 use crate::util::{x_pow_n, Com};
 use crate::zero_or_one::{Proof as ZOProof, Verifier as ZOVerifier, CRS as ZOCRS};
 
@@ -75,7 +75,7 @@ pub struct Proof<S: ScalarTrait, P: PointTrait> {
 impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> CRS<S, P> {
     pub fn new(m: S, r: S) -> Self {
         Self {
-            c: Com::<S, P>::commit_scalar_2(m, r).comm.point,
+            c: Com::<S, P>::commit_scalar_with(m, r).comm.point,
             ph: Default::default(),
         }
     }
@@ -87,14 +87,14 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> St
             return Self::default();
         }
 
-        let sks = generate_sks::<S, P>(amount);
+        let sks = generate_secret_keys::<S, P>(amount);
 
         let mut pk_vec: Vec<P> = sks
             .into_iter()
-            .map(|sk| Com::commit_scalar_2(sk, r).comm.point)
+            .map(|sk| Com::commit_scalar_with(sk, r).comm.point)
             .collect();
 
-        pk_vec[l as usize] = Com::commit_scalar_2(S::zero(), r).comm.point;
+        pk_vec[l as usize] = Com::commit_scalar_with(S::zero(), r).comm.point;
 
         Self {
             pk_vec,
@@ -160,7 +160,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let binary_j_vec = number_to_binary(number_of_public_keys);
         let binary_j_vec_len = binary_j_vec.len() as u64;
 
-        let l_vec = fix_len_binary(l, number_of_public_keys);
+        let l_vec = get_fixed_length_binary(l, number_of_public_keys);
 
         let (zero_one_proof, aj_vec) = Self::proof_zero_or_one(l_vec.clone());
 
@@ -174,7 +174,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let mut f_i_j_poly: Vec<Polynomial<S>> = Vec::new();
         let mut p_i_k: Vec<Vec<S>> = Vec::new();
         for i in 0..number_of_public_keys {
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             let n = i_vec.len();
             let mut f_j_ij_mul = poly![S::from_u64(1u64)];
             for j in 0..n {
@@ -200,7 +200,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::<S, P>::commit_scalar_2(S::zero(), rouk_vec[j]);
+            let com_rouk = Com::<S, P>::commit_scalar_with(S::zero(), rouk_vec[j]);
             let mut cdk_i = cdk_vec[number_of_public_keys as usize * j] + com_rouk.comm.point;
             for i in 1..number_of_public_keys as usize {
                 cdk_i += cdk_vec[number_of_public_keys as usize * j + i];
@@ -256,7 +256,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let binary_j_vec = number_to_binary(number_of_public_keys);
         let binary_j_vec_len = binary_j_vec.len() as u64;
 
-        let l_vec = fix_len_binary(l, number_of_public_keys);
+        let l_vec = get_fixed_length_binary(l, number_of_public_keys);
 
         let (zero_one_proof, aj_vec) = Self::proof_zero_or_one(l_vec.clone());
 
@@ -270,7 +270,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let mut f_i_j_poly: Vec<Polynomial<S>> = Vec::new();
         let mut p_i_k: Vec<Vec<S>> = Vec::new();
         for i in 0..number_of_public_keys {
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             let n = i_vec.len();
             let mut f_j_ij_mul = poly![S::from_u64(1u64)];
             for j in 0..n {
@@ -296,7 +296,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
 
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
-            let com_rouk = Com::commit_scalar_2(S::zero(), rouk_vec[j]);
+            let com_rouk = Com::commit_scalar_with(S::zero(), rouk_vec[j]);
             let mut cdk_i = cdk_vec[number_of_public_keys as usize * j] + com_rouk.comm.point;
             for i in 1..number_of_public_keys as usize {
                 cdk_i += cdk_vec[number_of_public_keys as usize * j + i];
@@ -401,7 +401,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
 
         let mut ci_pow_fji_2 = P::default();
         for i in 0..number_of_public_keys {
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             let n = i_vec.len();
             let mut each_f_j_ij = S::one();
             for j in 0..n {
@@ -423,7 +423,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
         }
 
         let left = ci_pow_fji_2 + cd_k_xk;
-        let right = Com::commit_scalar_2(S::zero(), zd);
+        let right = Com::commit_scalar_with(S::zero(), zd);
 
         left == right.comm.point
     }
@@ -468,7 +468,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
 
         let mut ci_pow_fji_2 = P::default();
         for i in 0..number_of_public_keys {
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             let n = i_vec.len();
             let mut each_f_j_ij = S::one();
             for j in 0..n {
@@ -490,7 +490,7 @@ impl<S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>, P: PointTrait + Mul<
         }
 
         let left = ci_pow_fji_2 + cd_k_xk;
-        let right = Com::commit_scalar_2(S::zero(), zd);
+        let right = Com::commit_scalar_with(S::zero(), zd);
 
         if left == right.comm.point {
             (true, x)
@@ -599,9 +599,9 @@ mod tests {
         let binary_j_vec_len = binary_j_vec.len() as u64;
 
         // 假设 一共10commit（0..9） 其中 index为l（5）个是0
-        let l_vec = fix_len_binary(5, number_of_public_keys);
+        let l_vec = get_fixed_length_binary(5, number_of_public_keys);
         //println!("l_vec = {:?}", l_vec);
-        let mut ci_vec = generate_sks::<ScalarType, PointType>(10);
+        let mut ci_vec = generate_secret_keys::<ScalarType, PointType>(10);
         // index =  0 1 2 3 4 5 6 7 8 9
         ci_vec[5] = ScalarType::zero();
 
@@ -627,12 +627,12 @@ mod tests {
             tj_vec.push(tj);
             let rouk = ScalarType::random_scalar();
             rouk_vec.push(rouk);
-            let _clj = Com::<ScalarType, PointType>::commit_scalar_2(
+            let _clj = Com::<ScalarType, PointType>::commit_scalar_with(
                 ScalarType::from_u64(l_vec[j as usize]),
                 rj,
             );
-            let _caj = Com::<ScalarType, PointType>::commit_scalar_2(aj, sj);
-            let _cbj = Com::<ScalarType, PointType>::commit_scalar_2(
+            let _caj = Com::<ScalarType, PointType>::commit_scalar_with(aj, sj);
+            let _cbj = Com::<ScalarType, PointType>::commit_scalar_with(
                 ScalarType::from_u64(l_vec[j as usize]) * aj,
                 tj,
             );
@@ -643,7 +643,7 @@ mod tests {
         // for each i : 得到除了x^n以外所有x^0..x^n-1的系数 ai,k k=0..n-1
         for i in 0..number_of_public_keys {
             // 让i变成2进制binary格式，长度不够前面填充0
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             //println!("i_vec = {:?}", i_vec);
             let n = i_vec.len();
             //println!("each i = {}, lenth of i/n = {}", i, n);
@@ -672,7 +672,7 @@ mod tests {
 
         let mut ci_vec_comm = Vec::new();
         for i in 0..number_of_public_keys as usize {
-            let ci = Com::<ScalarType, PointType>::commit_scalar_2(ci_vec[i], r);
+            let ci = Com::<ScalarType, PointType>::commit_scalar_with(ci_vec[i], r);
             ci_vec_comm.push(ci.clone());
         }
 
@@ -682,7 +682,7 @@ mod tests {
             let _zaj = rj_vec[j] * x + sj_vec[j];
             let _zbj = rj_vec[j] * (x - fj) + tj_vec[j];
             let _com_rouk =
-                Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), rouk_vec[j]);
+                Com::<ScalarType, PointType>::commit_scalar_with(ScalarType::zero(), rouk_vec[j]);
             for i in 0..number_of_public_keys as usize {
                 let cdk = ci_vec_comm[i].comm.point * p_i_k.index(i).index(j); //+ com_rouk.comm.point.clone();
                 cdk_vec.push(cdk);
@@ -692,7 +692,7 @@ mod tests {
         let mut cdk_add_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let com_rouk =
-                Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), rouk_vec[j]);
+                Com::<ScalarType, PointType>::commit_scalar_with(ScalarType::zero(), rouk_vec[j]);
             let mut cdk_i = cdk_vec[10 * j] + com_rouk.comm.point;
             //println!("10j = {}", 10 * j);
             for i in 1..number_of_public_keys as usize {
@@ -716,7 +716,7 @@ mod tests {
         }
         let mut ci_pow_fji_2 = PointType::default();
         for i in 0..number_of_public_keys {
-            let i_vec = fix_len_binary(i, number_of_public_keys);
+            let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             let n = i_vec.len();
             let mut each_f_j_ij = ScalarType::one();
             for j in 0..n {
@@ -767,7 +767,7 @@ mod tests {
             rou_k_x_pow_k += rouk_vec[j] * x_pow_n(x, j as u64);
         }
         let zd = x_pow_n(x, binary_j_vec_len as u64) * r - rou_k_x_pow_k;
-        let right = Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), zd);
+        let right = Com::<ScalarType, PointType>::commit_scalar_with(ScalarType::zero(), zd);
         //println!("right = {:?}", right.comm.point);
 
         if left == right.comm.point {

@@ -37,7 +37,7 @@ pub struct Verifier<S: ScalarTrait, P: PointTrait> {
 impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> CRS<S, P> {
     pub fn new(m: S, r: S) -> Self {
         Self {
-            c: Com::<S, P>::commit_scalar_2(m, r).comm.point,
+            c: Com::<S, P>::commit_scalar_with(m, r).comm.point,
             ph: Default::default(),
         }
     }
@@ -61,8 +61,8 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let s = S::random_scalar();
         let t = S::random_scalar();
 
-        let ca = Com::<S, P>::commit_scalar_2(a, s);
-        let cb = Com::<S, P>::commit_scalar_2(a * m, t);
+        let ca = Com::<S, P>::commit_scalar_with(a, s);
+        let cb = Com::<S, P>::commit_scalar_with(a * m, t);
 
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut P::generator().point_to_bytes());
@@ -92,8 +92,8 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Pr
         let s = S::random_scalar();
         let t = S::random_scalar();
 
-        let ca = Com::<S, P>::commit_scalar_2(a, s);
-        let cb = Com::<S, P>::commit_scalar_2(a * m, t);
+        let ca = Com::<S, P>::commit_scalar_with(a, s);
+        let cb = Com::<S, P>::commit_scalar_with(a * m, t);
 
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut P::generator().point_to_bytes());
@@ -130,10 +130,10 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Ve
         let c = self.crs.c;
 
         let left_1 = c * x + ca;
-        let right_1 = Com::<S, P>::commit_scalar_2(f, za).comm.point;
+        let right_1 = Com::<S, P>::commit_scalar_with(f, za).comm.point;
 
         let left_2 = c * (x - f) + cb;
-        let right_2 = Com::<S, P>::commit_scalar_2(S::zero(), zb).comm.point;
+        let right_2 = Com::<S, P>::commit_scalar_with(S::zero(), zb).comm.point;
 
         left_1 == right_1 && left_2 == right_2
     }
@@ -158,11 +158,11 @@ mod tests {
         let s: ScalarType = ScalarTrait::random_scalar();
         let t: ScalarType = ScalarTrait::random_scalar();
 
-        let c = Com::<ScalarType, PointType>::commit_scalar_2(m, r)
+        let c = Com::<ScalarType, PointType>::commit_scalar_with(m, r)
             .comm
             .point;
-        let ca = Com::<ScalarType, PointType>::commit_scalar_2(a, s);
-        let cb = Com::<ScalarType, PointType>::commit_scalar_2(a * m, t);
+        let ca = Com::<ScalarType, PointType>::commit_scalar_with(a, s);
+        let cb = Com::<ScalarType, PointType>::commit_scalar_with(a * m, t);
 
         let mut hash_vec = Vec::new();
         hash_vec.append(&mut PointType::generator().point_to_bytes());
@@ -181,12 +181,12 @@ mod tests {
 
         // verify
         let left_1 = c * x + ca;
-        let right_1 = Com::<ScalarType, PointType>::commit_scalar_2(f, za)
+        let right_1 = Com::<ScalarType, PointType>::commit_scalar_with(f, za)
             .comm
             .point;
 
         let left_2 = c * (x - f) + cb;
-        let right_2 = Com::<ScalarType, PointType>::commit_scalar_2(ScalarType::zero(), zb)
+        let right_2 = Com::<ScalarType, PointType>::commit_scalar_with(ScalarType::zero(), zb)
             .comm
             .point;
         //  let right_2 = Com::<ScalarType,PointType>::commit_scalar_3(ScalarType::zero(), zb).comm.point;
