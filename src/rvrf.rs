@@ -108,7 +108,10 @@ pub fn rvrf_verify<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, O
 }
 
 #[cfg(feature = "prove")]
-/// public_keys链上公钥s  secret_key自己的私钥 rand链上随机数 index链上公钥中自己公钥的位置
+/// public_keys: public keys on the chain.
+/// secret_key: your own private key.
+/// rand: random number on the chain.
+/// index: the position of your public key in the public keys on the chain.
 pub fn rvrf_prove_simple<
     S: ScalarTrait + Mul<P, Output = P> + Neg<Output = S>,
     P: PointTrait + Mul<S, Output = P>,
@@ -129,7 +132,8 @@ pub fn rvrf_prove_simple<
     rvrf_prove(witness, statement, rand, r, c, secret_key)
 }
 
-/// rvrfproof证明  public_keys链上公钥s  rand链上随机数  如果true 返回 v 否则 none
+/// rvrfproof:  public_keys:onchain pubkeys  rand:onchain rand  if verify pass return prf value of v
+/// else none
 pub fn rvrf_verify_simple<
     S: ScalarTrait + Mul<P, Output = P>,
     P: PointTrait + Mul<S, Output = P>,
