@@ -13,7 +13,7 @@ pub fn number_to_binary(num: u64) -> Vec<u64> {
     binary
 }
 
-pub fn fix_len_binary(num: u64, max: u64) -> Vec<u64> {
+pub fn get_fixed_length_binary(num: u64, max: u64) -> Vec<u64> {
     let max = number_to_binary(max);
     let max_len = max.len();
     let mut raw = number_to_binary(num);
@@ -58,9 +58,9 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
         }
     }
 
-    pub fn commit_scalar_2(value: S, value2: S) -> Self {
+    pub fn commit_scalar_with(value: S, value2: S) -> Self {
         if value == S::zero() {
-            return Self::commit_scalar_3(value, value2);
+            return Self::commit_scalar_zero(value, value2);
         }
         let commitment_point = value * P::generator() + value2 * P::generator_2();
 
@@ -75,7 +75,7 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
         }
     }
 
-    pub fn commit_scalar_3(_value: S, value2: S) -> Self {
+    pub fn commit_scalar_zero(_value: S, value2: S) -> Self {
         let commitment_point = value2 * P::generator_2();
 
         Self {
@@ -90,14 +90,14 @@ impl<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>> Co
     }
 }
 
-pub fn generate_pk<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+pub fn generate_public_key<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     sk: S,
 ) -> P {
     sk * P::generator()
 }
 
 #[cfg(feature = "prove")]
-pub fn generate_sks<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
+pub fn generate_secret_keys<S: ScalarTrait + Mul<P, Output = P>, P: PointTrait + Mul<S, Output = P>>(
     amount: u64,
 ) -> Vec<S> {
     let sks_vec: Vec<S> = (0..amount)
@@ -135,7 +135,7 @@ pub fn x_pow_n<S: ScalarTrait>(x: S, n: u64) -> S {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ed25519::ScalarSelfDefined;
+    use crate::ed25519::ScalarType;
     #[test]
     fn number_to_binary_test() {
         let _a = number_to_binary(50);
@@ -144,33 +144,21 @@ mod tests {
     #[test]
     fn fix_len_number_to_binary_test() {
         let b = number_to_binary(50);
-        let a = fix_len_binary(2, 50);
+        let a = get_fixed_length_binary(2, 50);
         assert_eq!(a.len(), b.len());
     }
 
     #[test]
     fn x_pow_n_test() {
-        let b = x_pow_n(ScalarSelfDefined::from_u64(3u64), 8);
-        assert_eq!(b, ScalarSelfDefined::from_u64(6561u64));
+        let b = x_pow_n(ScalarType::from_u64(3u64), 8);
+        assert_eq!(b, ScalarType::from_u64(6561u64));
     }
 
     #[test]
     fn kronecker_delta_test() {
-        assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(1, 0),
-            ScalarSelfDefined::zero()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(0, 1),
-            ScalarSelfDefined::zero()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(1, 1),
-            ScalarSelfDefined::one()
-        );
-        assert_eq!(
-            kronecker_delta::<ScalarSelfDefined>(0, 0),
-            ScalarSelfDefined::one()
-        );
+        assert_eq!(kronecker_delta::<ScalarType>(1, 0), ScalarType::zero());
+        assert_eq!(kronecker_delta::<ScalarType>(0, 1), ScalarType::zero());
+        assert_eq!(kronecker_delta::<ScalarType>(1, 1), ScalarType::one());
+        assert_eq!(kronecker_delta::<ScalarType>(0, 0), ScalarType::one());
     }
 }

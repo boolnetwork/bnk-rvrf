@@ -12,90 +12,90 @@ use k256::elliptic_curve::Field;
 use k256::ProjectivePoint;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct ScalarSelfDefined {
+pub struct ScalarType {
     pub data: Scalar,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct PointSelfDefined {
+pub struct PointType {
     pub data: AffinePoint,
 }
 
-impl MulAssign<ScalarSelfDefined> for ScalarSelfDefined {
-    fn mul_assign(&mut self, rhs: ScalarSelfDefined) {
-        *self = ScalarSelfDefined {
+impl MulAssign<ScalarType> for ScalarType {
+    fn mul_assign(&mut self, rhs: ScalarType) {
+        *self = ScalarType {
             data: self.data * rhs.data,
         };
     }
 }
 
-impl AddAssign<ScalarSelfDefined> for ScalarSelfDefined {
-    fn add_assign(&mut self, rhs: ScalarSelfDefined) {
-        *self = ScalarSelfDefined {
+impl AddAssign<ScalarType> for ScalarType {
+    fn add_assign(&mut self, rhs: ScalarType) {
+        *self = ScalarType {
             data: self.data + rhs.data,
         };
     }
 }
 
-impl Mul<ScalarSelfDefined> for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn mul(self, other: ScalarSelfDefined) -> ScalarSelfDefined {
-        ScalarSelfDefined {
+impl Mul<ScalarType> for ScalarType {
+    type Output = ScalarType;
+    fn mul(self, other: ScalarType) -> ScalarType {
+        ScalarType {
             data: self.data * other.data,
         }
     }
 }
 
-impl<'o> Mul<&'o ScalarSelfDefined> for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn mul(self, other: &'o ScalarSelfDefined) -> ScalarSelfDefined {
-        ScalarSelfDefined {
+impl<'o> Mul<&'o ScalarType> for ScalarType {
+    type Output = ScalarType;
+    fn mul(self, other: &'o ScalarType) -> ScalarType {
+        ScalarType {
             data: self.data * other.data,
         }
     }
 }
 
-impl Add<ScalarSelfDefined> for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn add(self, other: ScalarSelfDefined) -> ScalarSelfDefined {
-        ScalarSelfDefined {
+impl Add<ScalarType> for ScalarType {
+    type Output = ScalarType;
+    fn add(self, other: ScalarType) -> ScalarType {
+        ScalarType {
             data: self.data + other.data,
         }
     }
 }
 
-impl Sub<ScalarSelfDefined> for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn sub(self, other: ScalarSelfDefined) -> ScalarSelfDefined {
-        ScalarSelfDefined {
+impl Sub<ScalarType> for ScalarType {
+    type Output = ScalarType;
+    fn sub(self, other: ScalarType) -> ScalarType {
+        ScalarType {
             data: self.data - other.data,
         }
     }
 }
 
-impl<'o> Sub<&'o ScalarSelfDefined> for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn sub(self, other: &'o ScalarSelfDefined) -> ScalarSelfDefined {
-        ScalarSelfDefined {
+impl<'o> Sub<&'o ScalarType> for ScalarType {
+    type Output = ScalarType;
+    fn sub(self, other: &'o ScalarType) -> ScalarType {
+        ScalarType {
             data: self.data - other.data,
         }
     }
 }
 
-impl Neg for ScalarSelfDefined {
-    type Output = ScalarSelfDefined;
-    fn neg(self) -> ScalarSelfDefined {
-        ScalarSelfDefined { data: -self.data }
+impl Neg for ScalarType {
+    type Output = ScalarType;
+    fn neg(self) -> ScalarType {
+        ScalarType { data: -self.data }
     }
 }
 
-impl ScalarTrait for ScalarSelfDefined {
+impl ScalarTrait for ScalarType {
     type ScalarType = Scalar;
 
     #[cfg(feature = "std-prove")]
     fn random_scalar() -> Self {
         let mut csprng = OsRng;
-        ScalarSelfDefined {
+        ScalarType {
             data: Scalar::random(&mut csprng),
         }
     }
@@ -109,7 +109,7 @@ impl ScalarTrait for ScalarSelfDefined {
         let mut bytes = FieldBytes::default();
         bytes.copy_from_slice(&scalar_bytes);
         let res = Scalar::from_repr(bytes).unwrap();
-        ScalarSelfDefined { data: res }
+        ScalarType { data: res }
     }
 
     fn hash_to_scalar<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
@@ -118,7 +118,7 @@ impl ScalarTrait for ScalarSelfDefined {
         let mut bytes = FieldBytes::default();
         bytes.copy_from_slice(&array);
         let res = Scalar::from_repr(bytes).unwrap();
-        ScalarSelfDefined { data: res }
+        ScalarType { data: res }
     }
 
     fn get_self(&self) -> Self {
@@ -126,19 +126,19 @@ impl ScalarTrait for ScalarSelfDefined {
     }
 
     fn one() -> Self {
-        ScalarSelfDefined {
+        ScalarType {
             data: Scalar::one(),
         }
     }
 
     fn zero() -> Self {
-        ScalarSelfDefined {
+        ScalarType {
             data: Scalar::zero(),
         }
     }
 
     fn from_u64(n: u64) -> Self {
-        ScalarSelfDefined {
+        ScalarType {
             data: Scalar::from(n),
         }
     }
@@ -150,49 +150,49 @@ impl ScalarTrait for ScalarSelfDefined {
 
 // ============
 
-impl Mul<ScalarSelfDefined> for PointSelfDefined {
-    type Output = PointSelfDefined;
+impl Mul<ScalarType> for PointType {
+    type Output = PointType;
 
-    fn mul(self, scalar: ScalarSelfDefined) -> PointSelfDefined {
+    fn mul(self, scalar: ScalarType) -> PointType {
         let point = ProjectivePoint::from(self.data);
         let scalar = scalar.data;
-        PointSelfDefined {
+        PointType {
             data: (point * scalar).to_affine(),
         }
     }
 }
 
-impl Mul<&ScalarSelfDefined> for PointSelfDefined {
-    type Output = PointSelfDefined;
+impl Mul<&ScalarType> for PointType {
+    type Output = PointType;
 
-    fn mul(self, scalar: &ScalarSelfDefined) -> PointSelfDefined {
+    fn mul(self, scalar: &ScalarType) -> PointType {
         let point = ProjectivePoint::from(self.data);
         let scalar = scalar.data;
-        PointSelfDefined {
+        PointType {
             data: (point * scalar).to_affine(),
         }
     }
 }
 
-impl Mul<PointSelfDefined> for ScalarSelfDefined {
-    type Output = PointSelfDefined;
+impl Mul<PointType> for ScalarType {
+    type Output = PointType;
 
-    fn mul(self, point: PointSelfDefined) -> PointSelfDefined {
+    fn mul(self, point: PointType) -> PointType {
         let point = ProjectivePoint::from(point.data);
         let scalar = self.data;
-        PointSelfDefined {
+        PointType {
             data: (point * scalar).to_affine(),
         }
     }
 }
 
-impl Mul<&PointSelfDefined> for ScalarSelfDefined {
-    type Output = PointSelfDefined;
+impl Mul<&PointType> for ScalarType {
+    type Output = PointType;
 
-    fn mul(self, point: &PointSelfDefined) -> PointSelfDefined {
+    fn mul(self, point: &PointType) -> PointType {
         let point = ProjectivePoint::from(point.data);
         let scalar = self.data;
-        PointSelfDefined {
+        PointType {
             data: (point * scalar).to_affine(),
         }
     }
@@ -200,50 +200,50 @@ impl Mul<&PointSelfDefined> for ScalarSelfDefined {
 
 // ==============
 
-impl AddAssign<PointSelfDefined> for PointSelfDefined {
-    fn add_assign(&mut self, rhs: PointSelfDefined) {
-        *self = PointSelfDefined {
+impl AddAssign<PointType> for PointType {
+    fn add_assign(&mut self, rhs: PointType) {
+        *self = PointType {
             data: (ProjectivePoint::from(self.data) + rhs.data).to_affine(),
         };
     }
 }
 
-impl Add<PointSelfDefined> for PointSelfDefined {
-    type Output = PointSelfDefined;
-    fn add(self, other: PointSelfDefined) -> PointSelfDefined {
-        PointSelfDefined {
+impl Add<PointType> for PointType {
+    type Output = PointType;
+    fn add(self, other: PointType) -> PointType {
+        PointType {
             data: (ProjectivePoint::from(self.data) + other.data).to_affine(),
         }
     }
 }
 
-impl Sub<PointSelfDefined> for PointSelfDefined {
-    type Output = PointSelfDefined;
-    fn sub(self, other: PointSelfDefined) -> PointSelfDefined {
-        PointSelfDefined {
+impl Sub<PointType> for PointType {
+    type Output = PointType;
+    fn sub(self, other: PointType) -> PointType {
+        PointType {
             data: (ProjectivePoint::from(self.data) - other.data).to_affine(),
         }
     }
 }
 
-impl<'o> Sub<&'o PointSelfDefined> for PointSelfDefined {
-    type Output = PointSelfDefined;
-    fn sub(self, other: &'o PointSelfDefined) -> PointSelfDefined {
-        PointSelfDefined {
+impl<'o> Sub<&'o PointType> for PointType {
+    type Output = PointType;
+    fn sub(self, other: &'o PointType) -> PointType {
+        PointType {
             data: (ProjectivePoint::from(self.data) - other.data).to_affine(),
         }
     }
 }
 
-impl SubAssign for PointSelfDefined {
-    fn sub_assign(&mut self, other: PointSelfDefined) {
-        *self = PointSelfDefined {
+impl SubAssign for PointType {
+    fn sub_assign(&mut self, other: PointType) {
+        *self = PointType {
             data: (ProjectivePoint::from(self.data) - other.data).to_affine(),
         };
     }
 }
 
-impl PointTrait for PointSelfDefined {
+impl PointTrait for PointType {
     //type PointType = Self;
 
     fn hash_to_point<T: ?Sized + AsRef<[u8]>>(input: &T) -> Self {
@@ -252,19 +252,19 @@ impl PointTrait for PointSelfDefined {
         let mut bytes = FieldBytes::default();
         bytes.copy_from_slice(array.as_ref());
         let scalar = Scalar::from_bytes_reduced(&bytes);
-        PointSelfDefined {
+        PointType {
             data: (ProjectivePoint::from(AffinePoint::generator()) * scalar).to_affine(), //TODO::hash
         }
     }
 
-    fn generator() -> PointSelfDefined {
-        PointSelfDefined {
+    fn generator() -> PointType {
+        PointType {
             data: AffinePoint::generator(),
         }
     }
 
     fn generator_2() -> Self {
-        PointSelfDefined { data: *BASE_POINT2 }
+        PointType { data: *BASE_POINT2 }
     }
 
     fn point_to_bytes(&self) -> Vec<u8> {
@@ -303,8 +303,8 @@ lazy_static::lazy_static! {
 
 #[test]
 fn scalar_test() {
-    let a: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let b: ScalarSelfDefined = ScalarTrait::random_scalar();
+    let a: ScalarType = ScalarTrait::random_scalar();
+    let b: ScalarType = ScalarTrait::random_scalar();
 
     let c1 = a.data * b.data;
     let c2 = a * b;
@@ -325,14 +325,14 @@ fn scalar_test() {
 
 #[test]
 fn point_test() {
-    let g = PointSelfDefined::generator();
+    let g = PointType::generator();
 
-    let a: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let a_p: PointSelfDefined = a * g;
-    let b: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let b_p: PointSelfDefined = b * g;
-    let c: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let c_p: PointSelfDefined = c * g;
+    let a: ScalarType = ScalarTrait::random_scalar();
+    let a_p: PointType = a * g;
+    let b: ScalarType = ScalarTrait::random_scalar();
+    let b_p: PointType = b * g;
+    let c: ScalarType = ScalarTrait::random_scalar();
+    let c_p: PointType = c * g;
 
     let add = a + b + c;
     let c1 = add * g;
@@ -342,17 +342,17 @@ fn point_test() {
 
 #[test]
 fn point_zero_test() {
-    let g = PointSelfDefined::generator();
-    let inf_p = PointSelfDefined::default();
+    let g = PointType::generator();
+    let inf_p = PointType::default();
 
     assert_eq!(inf_p, inf_p + inf_p);
 
-    let a: ScalarSelfDefined = ScalarTrait::zero();
-    let a_p: PointSelfDefined = a * g;
-    let b: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let b_p: PointSelfDefined = b * g;
-    let c: ScalarSelfDefined = ScalarTrait::random_scalar();
-    let c_p: PointSelfDefined = c * g;
+    let a: ScalarType = ScalarTrait::zero();
+    let a_p: PointType = a * g;
+    let b: ScalarType = ScalarTrait::random_scalar();
+    let b_p: PointType = b * g;
+    let c: ScalarType = ScalarTrait::random_scalar();
+    let c_p: PointType = c * g;
 
     assert_eq!(a_p, inf_p);
 

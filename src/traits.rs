@@ -3,7 +3,7 @@ use core::fmt::Debug;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use sha3::{Digest as Digest2, Keccak256};
 
-// trait
+/// trait for scalar
 pub trait ScalarTrait:
     Add<Output = Self>
     + Mul<Output = Self>
@@ -29,7 +29,7 @@ pub trait ScalarTrait:
     fn bytes(&self) -> Vec<u8>;
 }
 
-// trait
+/// trait for point
 pub trait PointTrait:
     Add<Output = Self>
     + Sub<Output = Self>
