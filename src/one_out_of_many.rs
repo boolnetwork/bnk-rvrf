@@ -598,7 +598,7 @@ mod tests {
         let binary_j_vec = number_to_binary(number_of_public_keys);
         let binary_j_vec_len = binary_j_vec.len() as u64;
 
-        // 假设 一共10commit（0..9） 其中 index为l（5）个是0
+        // Assuming there are a total of 10 commits (0..9), among which the index for l(5) = 0
         let l_vec = get_fixed_length_binary(5, number_of_public_keys);
         //println!("l_vec = {:?}", l_vec);
         let mut ci_vec = generate_secret_keys::<ScalarType, PointType>(10);
@@ -640,9 +640,9 @@ mod tests {
 
         let mut f_i_j_poly: Vec<Polynomial<ScalarType>> = Vec::new();
         let mut p_i_k: Vec<Vec<ScalarType>> = Vec::new();
-        // for each i : 得到除了x^n以外所有x^0..x^n-1的系数 ai,k k=0..n-1
+        // for each i : Obtain all coefficients ai,k for x^0 to x^n-1, where k = 0 to n-1 , excluding x^n
         for i in 0..number_of_public_keys {
-            // 让i变成2进制binary格式，长度不够前面填充0
+            // Convert i into binary format, and pad with zeros if the length is insufficient
             let i_vec = get_fixed_length_binary(i, number_of_public_keys);
             //println!("i_vec = {:?}", i_vec);
             let n = i_vec.len();
@@ -702,13 +702,13 @@ mod tests {
             cdk_add_vec.push(cdk_i);
         }
 
-        // 直接计算 fji带入方程
+        // Directly calculate fji and substitute it into the equation.
         let mut ci_pow_fji = ci_vec_comm[0].comm.point * f_i_j_poly.index(0).eval(x).unwrap();
         for i in 1..number_of_public_keys as usize {
             ci_pow_fji += ci_vec_comm[i].comm.point * f_i_j_poly.index(i).eval(x).unwrap();
         }
         //println!("ci_pow_fji = {:?}", ci_pow_fji);
-        // lj aj 来组成 fj
+        // lj aj -> fj
         let mut fj_vec = Vec::new();
         for j in 0..binary_j_vec_len as usize {
             let fj = ScalarType::from_u64(l_vec[j]) * x + aj_vec[j];
@@ -742,7 +742,7 @@ mod tests {
         //println!("bbbccc = {:?}", bbb);
         //println!("bbbccc = {:?}", ccc);
         //
-        // 计算中间过程来验证：
+        // Calculate the intermediate process for verification：
         let mut xxxx = PointType::default();
         for i in 0..number_of_public_keys as usize {
             for j in 0..binary_j_vec_len as usize {
